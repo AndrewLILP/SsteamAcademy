@@ -1,4 +1,4 @@
-﻿ using UnityEngine;
+﻿using UnityEngine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
 #endif
@@ -75,6 +75,9 @@ namespace StarterAssets
         [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
 
+        [Header("Golf Mode")]
+        [SerializeField] private bool isInGolfMode = false;
+
         // cinemachine
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
@@ -122,6 +125,8 @@ namespace StarterAssets
             }
         }
 
+        // Properties
+        public bool IsInGolfMode => isInGolfMode;
 
         private void Awake()
         {
@@ -135,7 +140,7 @@ namespace StarterAssets
         private void Start()
         {
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
-            
+
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
@@ -156,9 +161,19 @@ namespace StarterAssets
         {
             _hasAnimator = TryGetComponent(out _animator);
 
-            JumpAndGravity();
-            GroundedCheck();
-            Move();
+            if (!isInGolfMode)
+            {
+                // Existing movement code
+                JumpAndGravity();
+                GroundedCheck();
+                Move();
+            }
+            else
+            {
+                // In golf mode - only allow rotation, no movement
+                GroundedCheck();
+                GolfModeUpdate();
+            }
         }
 
         private void LateUpdate()
@@ -264,7 +279,6 @@ namespace StarterAssets
                 transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
             }
 
-
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
 
             // move the player
@@ -345,6 +359,44 @@ namespace StarterAssets
             if (_verticalVelocity < _terminalVelocity)
             {
                 _verticalVelocity += Gravity * Time.deltaTime;
+            }
+        }
+
+        private void GolfModeUpdate()
+        {
+            // Allow rotation only in golf mode
+            if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
+            {
+                float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
+                float rotationSpeed = 30f; // Adjust rotation speed as needed
+
+                // Only rotate horizontally
+                transform.Rotate(0, _input.look.x * rotationSpeed * deltaTimeMultiplier, 0);
+            }
+
+            // Keep player grounded in golf mode
+            if (_verticalVelocity < 0.0f)
+            {
+                _verticalVelocity = -2f;
+            }
+
+            // Apply minimal gravity to keep grounded
+            _controller.Move(new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+        }
+
+        public void SetGolfMode(bool enabled, Vector3? golfPosition = null)
+        {
+            isInGolfMode = enabled;
+
+            if (enabled && golfPosition.HasValue)
+            {
+                // Move player to golf position
+                _controller.enabled = false;
+                transform.position = golfPosition.Value;
+                _controller.enabled = true;
+
+                // Reset any existing velocity
+                _verticalVelocity = 0f;
             }
         }
 
