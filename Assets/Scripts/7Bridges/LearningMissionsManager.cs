@@ -24,6 +24,7 @@ public class LearningMissionsManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI instructionText;
     [SerializeField] private TextMeshProUGUI hintText;
     [SerializeField] private TextMeshProUGUI feedbackText;
+    [SerializeField] private TextMeshProUGUI progressText;  // NEW: For showing progress
     [SerializeField] private GameObject missionCompletePanel;
 
     [Header("Mission Definitions")]
@@ -68,7 +69,74 @@ public class LearningMissionsManager : MonoBehaviour
             return;
         }
 
+        // 🔥 ADD EVENT SUBSCRIPTIONS HERE:
+        journeyTracker.OnMissionCompleted += OnMissionComplete;
+        journeyTracker.OnJourneyTypeChanged += OnJourneyTypeChanged;
+        journeyTracker.OnStepAdded += OnStepAdded;
+
         StartMission(0);
+    }
+
+    // 🔥 ADD THESE EVENT HANDLER METHODS:
+
+    /// <summary>
+    /// Called when the player completes a mission
+    /// </summary>
+    private void OnMissionComplete(JourneyType completedType, int journeyLength)
+    {
+        Debug.Log($"🎉 Mission Complete Event Received: {completedType} with {journeyLength} steps");
+
+        missionCompleted = true;
+
+        // Update UI to show completion
+        if (feedbackText != null)
+        {
+            feedbackText.text = $"🎉 Mission Complete! You created a {completedType}!";
+            feedbackText.color = Color.green;
+        }
+
+        // Show mission complete panel
+        if (missionCompletePanel != null)
+        {
+            missionCompletePanel.SetActive(true);
+        }
+
+        // Start the completion sequence
+        StartCoroutine(ShowCompletionSequence());
+    }
+
+    /// <summary>
+    /// Called when the journey type changes (e.g., Walk -> Trail)
+    /// </summary>
+    private void OnJourneyTypeChanged(JourneyType newType)
+    {
+        Debug.Log($"Journey type changed to: {newType}");
+
+        var mission = missions[currentMissionIndex];
+
+        // Provide immediate feedback about the type change
+        if (feedbackText != null && mission.showRealTimeFeedback)
+        {
+            if (newType == mission.targetType)
+            {
+                feedbackText.text = $"✅ Perfect! You're creating a {newType}!";
+                feedbackText.color = Color.green;
+            }
+            else
+            {
+                feedbackText.text = $"You're creating a {newType}. Target: {mission.targetType}";
+                feedbackText.color = Color.blue;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Called every time the player takes a step
+    /// </summary>
+    private void OnStepAdded(JourneyStep step)
+    {
+        Debug.Log($"Step added: {step.vertexId}");
+        UpdateProgressDisplay();
     }
 
     public void StartMission(int missionIndex)
@@ -81,7 +149,7 @@ public class LearningMissionsManager : MonoBehaviour
 
         // Reset journey tracker
         journeyTracker.ResetJourney();
-        journeyTracker.SetMissionType(mission.targetType);
+        journeyTracker.SetMissionType(mission.targetType, mission.minimumSteps);
 
         // Update UI
         if (missionTitleText != null)
@@ -99,6 +167,8 @@ public class LearningMissionsManager : MonoBehaviour
         if (missionCompletePanel != null)
             missionCompletePanel.SetActive(false);
 
+        UpdateProgressDisplay();
+
         Debug.Log($"Started mission: {mission.missionName}");
     }
 
@@ -106,68 +176,96 @@ public class LearningMissionsManager : MonoBehaviour
     {
         if (missionCompleted) return;
 
-        CheckMissionProgress();
+        // 🔥 USE PUBLIC METHODS HERE:
+        UpdateRealTimeFeedback();
     }
 
-    private void CheckMissionProgress()
+    /// <summary>
+    /// Uses the new public methods to provide real-time feedback
+    /// </summary>
+    private void UpdateRealTimeFeedback()
     {
         var mission = missions[currentMissionIndex];
+        if (!mission.showRealTimeFeedback) return;
 
-        // Check if current journey matches mission requirements
-        var currentType = GetCurrentJourneyType();
-        bool correctType = currentType == mission.targetType;
-        bool enoughSteps = GetCurrentJourneyLength() >= mission.minimumSteps;
+        // 🔥 GET DATA USING NEW PUBLIC METHODS:
+        var currentType = journeyTracker.GetCurrentJourneyType();
+        var progress = journeyTracker.GetStepProgress();
+        var journeyLength = journeyTracker.GetJourneyLength();
+        var isComplete = journeyTracker.IsMissionComplete();
 
-        // Provide real-time feedback
-        if (mission.showRealTimeFeedback && feedbackText != null)
+        // Update progress display
+        UpdateProgressDisplay();
+
+        // Only update feedback if mission isn't complete (to avoid overriding completion messages)
+        if (!isComplete && feedbackText != null)
         {
-            if (!enoughSteps)
+            if (journeyLength < mission.minimumSteps)
             {
-                feedbackText.text = $"Keep going! Need {mission.minimumSteps - GetCurrentJourneyLength()} more steps.";
+                int remaining = mission.minimumSteps - journeyLength;
+                feedbackText.text = $"Keep going! Need {remaining} more steps.";
                 feedbackText.color = Color.yellow;
             }
-            else if (!correctType)
+            else if (currentType != mission.targetType)
             {
                 feedbackText.text = GetFeedbackForCurrentType(currentType, mission.targetType);
                 feedbackText.color = Color.blue;
             }
-            else
-            {
-                feedbackText.text = "Perfect! You've created the correct journey type!";
-                feedbackText.color = Color.green;
-            }
-        }
-
-        // Check for mission completion
-        if (correctType && enoughSteps && !missionCompleted)
-        {
-            CompleteMission();
         }
     }
 
-    private void CompleteMission()
+    /// <summary>
+    /// Updates the progress display using public methods
+    /// </summary>
+    private void UpdateProgressDisplay()
     {
-        missionCompleted = true;
+        if (progressText == null) return;
+
+        // 🔥 USE PUBLIC METHODS FOR PROGRESS DISPLAY:
+        var journeyLength = journeyTracker.GetJourneyLength();
+        var progress = journeyTracker.GetStepProgress();
+        var currentType = journeyTracker.GetCurrentJourneyType();
         var mission = missions[currentMissionIndex];
 
-        Debug.Log($"Mission Complete: {mission.missionName}");
+        progressText.text = $"Progress: {journeyLength}/{mission.minimumSteps} steps\n" +
+                           $"Current: {currentType} | Target: {mission.targetType}";
 
-        if (missionCompletePanel != null)
+        // Color code based on progress
+        if (progress >= 1f && currentType == mission.targetType)
         {
-            missionCompletePanel.SetActive(true);
+            progressText.color = Color.green;
         }
+        else if (progress >= 0.5f)
+        {
+            progressText.color = Color.yellow;
+        }
+        else
+        {
+            progressText.color = Color.white;
+        }
+    }
 
-        StartCoroutine(ShowCompletionSequence());
+    private void CheckMissionProgress()
+    {
+        // 🔥 REPLACE OLD LOGIC WITH NEW PUBLIC METHODS:
+        var currentType = journeyTracker.GetCurrentJourneyType();
+        var isComplete = journeyTracker.IsMissionComplete();
+
+        // The mission completion is now handled by the OnMissionComplete event
+        // so we don't need to check manually here anymore
     }
 
     private IEnumerator ShowCompletionSequence()
     {
         var mission = missions[currentMissionIndex];
 
+        // 🔥 USE PUBLIC METHOD FOR EXPLANATION:
+        var explanation = journeyTracker.GetJourneyExplanation(mission.targetType);
+
         // Show explanation
         if (feedbackText != null)
         {
-            feedbackText.text = $"✅ Mission Complete!\n\n{journeyTracker.GetJourneyExplanation(mission.targetType)}";
+            feedbackText.text = $"✅ Mission Complete!\n\n{explanation}";
             feedbackText.color = Color.green;
         }
 
@@ -210,24 +308,6 @@ public class LearningMissionsManager : MonoBehaviour
         };
     }
 
-    // Helper methods to interface with JourneyTracker
-    private JourneyType GetCurrentJourneyType()
-    {
-        // This would need to be exposed by JourneyTracker
-        // For now, using reflection or add public method
-        return journeyTracker.GetType()
-            .GetMethod("AnalyzeCurrentJourney", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-            ?.Invoke(journeyTracker, null) as JourneyType? ?? JourneyType.Walk;
-    }
-
-    private int GetCurrentJourneyLength()
-    {
-        // This would need to be exposed by JourneyTracker
-        var field = journeyTracker.GetType()
-            .GetField("currentJourney", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        return (field?.GetValue(journeyTracker) as System.Collections.IList)?.Count ?? 0;
-    }
-
     // UI Button methods
     public void NextMission()
     {
@@ -249,6 +329,17 @@ public class LearningMissionsManager : MonoBehaviour
         {
             feedbackText.text = $"💡 Hint: {mission.hintText}";
             feedbackText.color = Color.blue;
+        }
+    }
+
+    // 🔥 CLEANUP EVENTS WHEN DESTROYED:
+    private void OnDestroy()
+    {
+        if (journeyTracker != null)
+        {
+            journeyTracker.OnMissionCompleted -= OnMissionComplete;
+            journeyTracker.OnJourneyTypeChanged -= OnJourneyTypeChanged;
+            journeyTracker.OnStepAdded -= OnStepAdded;
         }
     }
 }

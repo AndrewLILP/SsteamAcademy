@@ -3,6 +3,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UIElements;
+using System;
 
 // ==============================================
 // JOURNEY TRACKING SYSTEM
@@ -45,8 +46,19 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
     [SerializeField] private bool requireMinimumSteps = true;
     [SerializeField] private int minimumSteps = 3;
 
+    [Header("Celebration Settings")]
+    [SerializeField] private float celebrationDelay = 0.5f;
+    [SerializeField] private AudioClip completionSound;
+    [SerializeField] private ParticleSystem celebrationParticles;
+
     private List<JourneyStep> currentJourney = new List<JourneyStep>();
     private string startingVertex = null;
+    private bool missionComplete = false;
+
+    // Events for celebration triggers
+    public event Action<JourneyType> OnJourneyTypeChanged;
+    public event Action<JourneyType, int> OnMissionCompleted;
+    public event Action<JourneyStep> OnStepAdded;
 
     public bool IsActive => true;
 
@@ -69,6 +81,93 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
         UpdateUI();
     }
 
+    // ==============================================
+    // PUBLIC METHODS FOR UI ACCESS
+    // ==============================================
+
+    /// <summary>
+    /// Gets the current journey type based on the path taken
+    /// </summary>
+    public JourneyType GetCurrentJourneyType()
+    {
+        return AnalyzeCurrentJourney();
+    }
+
+    /// <summary>
+    /// Gets the current length of the journey (number of steps)
+    /// </summary>
+    public int GetJourneyLength()
+    {
+        return currentJourney.Count;
+    }
+
+    /// <summary>
+    /// Gets the number of unique vertices visited
+    /// </summary>
+    public int GetUniqueVertexCount()
+    {
+        return currentJourney.Select(step => step.vertexId).Distinct().Count();
+    }
+
+    /// <summary>
+    /// Gets the number of unique edges crossed
+    /// </summary>
+    public int GetUniqueEdgeCount()
+    {
+        return currentJourney.Where(step => !string.IsNullOrEmpty(step.edgeId))
+                           .Select(step => step.edgeId).Distinct().Count();
+    }
+
+    /// <summary>
+    /// Gets a list of all vertices visited in order
+    /// </summary>
+    public List<string> GetVertexSequence()
+    {
+        return currentJourney.Select(step => step.vertexId).ToList();
+    }
+
+    /// <summary>
+    /// Gets a list of all edges crossed in order
+    /// </summary>
+    public List<string> GetEdgeSequence()
+    {
+        return currentJourney.Where(step => !string.IsNullOrEmpty(step.edgeId))
+                           .Select(step => step.edgeId).ToList();
+    }
+
+    /// <summary>
+    /// Checks if the current mission is complete
+    /// </summary>
+    public bool IsMissionComplete()
+    {
+        var currentType = GetCurrentJourneyType();
+        bool correctType = currentType == targetJourneyType;
+        bool enoughSteps = !requireMinimumSteps || GetJourneyLength() >= minimumSteps;
+
+        return correctType && enoughSteps && !missionComplete;
+    }
+
+    /// <summary>
+    /// Gets the target journey type for the current mission
+    /// </summary>
+    public JourneyType GetTargetJourneyType()
+    {
+        return targetJourneyType;
+    }
+
+    /// <summary>
+    /// Gets progress towards minimum steps requirement
+    /// </summary>
+    public float GetStepProgress()
+    {
+        if (!requireMinimumSteps) return 1f;
+        return Mathf.Clamp01((float)GetJourneyLength() / minimumSteps);
+    }
+
+    // ==============================================
+    // JOURNEY TRACKING CORE METHODS
+    // ==============================================
+
     public void OnVertexVisited(IVertex vertex, ICrosser crosser)
     {
         // Record the vertex visit
@@ -81,7 +180,19 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
         }
 
         currentJourney.Add(step);
-        AnalyzeCurrentJourney();
+
+        // Trigger events
+        OnStepAdded?.Invoke(step);
+
+        var previousType = currentJourney.Count > 1 ? AnalyzeJourney(currentJourney.Take(currentJourney.Count - 1).ToList()) : JourneyType.Walk;
+        var currentType = AnalyzeCurrentJourney();
+
+        if (currentType != previousType)
+        {
+            OnJourneyTypeChanged?.Invoke(currentType);
+        }
+
+        CheckForMissionCompletion();
         UpdateUI();
     }
 
@@ -94,20 +205,110 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
             lastStep.edgeId = bridge.BridgeId;
         }
 
-        AnalyzeCurrentJourney();
+        CheckForMissionCompletion();
         UpdateUI();
     }
 
+    // ==============================================
+    // CELEBRATION TRIGGERS
+    // ==============================================
+
+    private void CheckForMissionCompletion()
+    {
+        if (IsMissionComplete())
+        {
+            missionComplete = true;
+            StartCoroutine(TriggerMissionCompletion());
+        }
+    }
+
+    private System.Collections.IEnumerator TriggerMissionCompletion()
+    {
+        yield return new WaitForSeconds(celebrationDelay);
+
+        var completedType = GetCurrentJourneyType();
+        var journeyLength = GetJourneyLength();
+
+        // Trigger celebration event
+        OnMissionCompleted?.Invoke(completedType, journeyLength);
+
+        // Visual celebration
+        TriggerVisualCelebration();
+
+        // Audio celebration
+        TriggerAudioCelebration();
+
+        Debug.Log($"🎉 Mission Complete! Successfully created a {completedType} with {journeyLength} steps!");
+    }
+
+    private void TriggerVisualCelebration()
+    {
+        // Particle effects
+        if (celebrationParticles != null)
+        {
+            celebrationParticles.Play();
+        }
+
+        // UI celebration (could trigger animations in UI manager)
+        if (journeyTypeText != null)
+        {
+            StartCoroutine(CelebrationTextEffect());
+        }
+    }
+
+    private void TriggerAudioCelebration()
+    {
+        if (completionSound != null)
+        {
+            AudioSource.PlayClipAtPoint(completionSound, Camera.main.transform.position);
+        }
+    }
+
+    private System.Collections.IEnumerator CelebrationTextEffect()
+    {
+        var originalColor = journeyTypeText.color;
+        var celebrationColor = Color.green;
+
+        // Flash green
+        journeyTypeText.color = celebrationColor;
+        yield return new WaitForSeconds(0.5f);
+
+        // Fade back to original
+        float elapsed = 0f;
+        float duration = 1f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            journeyTypeText.color = Color.Lerp(celebrationColor, originalColor, t);
+            yield return null;
+        }
+
+        journeyTypeText.color = originalColor;
+    }
+
+    // ==============================================
+    // ANALYSIS METHODS
+    // ==============================================
+
     private JourneyType AnalyzeCurrentJourney()
     {
-        if (currentJourney.Count < 2)
+        return AnalyzeJourney(currentJourney);
+    }
+
+    private JourneyType AnalyzeJourney(IEnumerable<JourneyStep> journey)
+    {
+        var journeyList = journey.ToList();
+
+        if (journeyList.Count < 2)
         {
             return JourneyType.Walk; // Single vertex is just a walk
         }
 
-        var vertices = currentJourney.Select(step => step.vertexId).ToList();
-        var edges = currentJourney.Where(step => !string.IsNullOrEmpty(step.edgeId))
-                                 .Select(step => step.edgeId).ToList();
+        var vertices = journeyList.Select(step => step.vertexId).ToList();
+        var edges = journeyList.Where(step => !string.IsNullOrEmpty(step.edgeId))
+                              .Select(step => step.edgeId).ToList();
 
         // Check for cycles and circuits first (they return to start)
         bool returnsToStart = vertices.Count > 2 && vertices.First() == vertices.Last();
@@ -147,9 +348,13 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
         return JourneyType.Walk;
     }
 
+    // ==============================================
+    // UI METHODS
+    // ==============================================
+
     private void UpdateUI()
     {
-        var currentType = AnalyzeCurrentJourney();
+        var currentType = GetCurrentJourneyType();
 
         if (journeyTypeText != null)
         {
@@ -169,8 +374,14 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
         {
             missionObjectiveText.text = $"Mission: Create a {targetJourneyType}";
 
+            // Progress indicator
+            if (requireMinimumSteps)
+            {
+                missionObjectiveText.text += $" ({GetJourneyLength()}/{minimumSteps} steps)";
+            }
+
             // Check if mission is complete
-            if (IsMissionComplete())
+            if (missionComplete)
             {
                 missionObjectiveText.text += " ✓ COMPLETE!";
                 missionObjectiveText.color = Color.green;
@@ -178,40 +389,60 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
         }
     }
 
-    private bool IsMissionComplete()
-    {
-        var currentType = AnalyzeCurrentJourney();
-        bool correctType = currentType == targetJourneyType;
-        bool enoughSteps = !requireMinimumSteps || currentJourney.Count >= minimumSteps;
+    // ==============================================
+    // PUBLIC CONTROL METHODS
+    // ==============================================
 
-        return correctType && enoughSteps;
-    }
-
-    // Public methods for mission control
+    /// <summary>
+    /// Resets the current journey
+    /// </summary>
     public void ResetJourney()
     {
         currentJourney.Clear();
         startingVertex = null;
+        missionComplete = false;
         UpdateUI();
+        Debug.Log("Journey reset");
     }
 
-    public void SetMissionType(JourneyType newTarget)
+    /// <summary>
+    /// Sets a new mission type and resets progress
+    /// </summary>
+    public void SetMissionType(JourneyType newTarget, int minSteps = 3)
     {
         targetJourneyType = newTarget;
+        minimumSteps = minSteps;
+        missionComplete = false;
         UpdateUI();
+        Debug.Log($"Mission set to: {newTarget}");
     }
 
-    // Method to provide educational explanations
+    /// <summary>
+    /// Provides educational explanations for journey types
+    /// </summary>
     public string GetJourneyExplanation(JourneyType journeyType)
     {
         return journeyType switch
         {
-            JourneyType.Walk => "A walk is any sequence of connected vertices and edges.",
-            JourneyType.Trail => "A trail is a walk where no edge is repeated.",
-            JourneyType.Path => "A path is a walk where no vertex is repeated.",
-            JourneyType.Circuit => "A circuit is a trail that ends where it started.",
-            JourneyType.Cycle => "A cycle is a path that ends where it started.",
+            JourneyType.Walk => "A walk is any sequence of connected vertices and edges. You can repeat vertices and edges freely.",
+            JourneyType.Trail => "A trail is a walk where no edge is repeated. You can revisit vertices, but can't cross the same bridge twice.",
+            JourneyType.Path => "A path is a walk where no vertex is repeated. Each location can only be visited once.",
+            JourneyType.Circuit => "A circuit is a trail that ends where it started. Like a trail, but you return to your starting point.",
+            JourneyType.Cycle => "A cycle is a path that ends where it started. Like a path, but you return home without repeating any stops.",
             _ => "This doesn't form a valid mathematical journey type."
         };
+    }
+
+    /// <summary>
+    /// Gets detailed journey statistics for debugging or advanced UI
+    /// </summary>
+    public string GetJourneyStats()
+    {
+        return $"Journey Stats:\n" +
+               $"• Type: {GetCurrentJourneyType()}\n" +
+               $"• Length: {GetJourneyLength()} steps\n" +
+               $"• Unique Vertices: {GetUniqueVertexCount()}\n" +
+               $"• Unique Edges: {GetUniqueEdgeCount()}\n" +
+               $"• Mission Complete: {IsMissionComplete()}";
     }
 }
