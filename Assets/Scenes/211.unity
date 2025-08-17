@@ -171,7 +171,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   config:
     bridgeId: E
-    bridgeType: 1
+    bridgeType: 0
 --- !u!1 &24149256
 GameObject:
   m_ObjectHideFlags: 0
@@ -2199,7 +2199,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   config:
     bridgeId: C
-    bridgeType: 1
+    bridgeType: 0
 --- !u!1 &801768466
 GameObject:
   m_ObjectHideFlags: 0
@@ -2390,7 +2390,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   config:
     bridgeId: B
-    bridgeType: 1
+    bridgeType: 0
 --- !u!1 &892356605
 GameObject:
   m_ObjectHideFlags: 0
@@ -2813,7 +2813,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   config:
     bridgeId: G
-    bridgeType: 1
+    bridgeType: 0
 --- !u!1 &1059436838
 GameObject:
   m_ObjectHideFlags: 0
@@ -3145,7 +3145,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   config:
     bridgeId: D
-    bridgeType: 1
+    bridgeType: 0
 --- !u!1 &1348890216
 GameObject:
   m_ObjectHideFlags: 0
@@ -3961,7 +3961,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   config:
     bridgeId: F
-    bridgeType: 1
+    bridgeType: 0
 --- !u!1 &1774812605
 GameObject:
   m_ObjectHideFlags: 0
@@ -4424,7 +4424,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   config:
     bridgeId: A
-    bridgeType: 1
+    bridgeType: 0
 --- !u!1 &1871985270
 GameObject:
   m_ObjectHideFlags: 0
