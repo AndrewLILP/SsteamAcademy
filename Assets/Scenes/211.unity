@@ -2725,32 +2725,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   missionTitleText: {fileID: 688514923}
-  instructionText: {fileID: 801768468}
-  hintText: {fileID: 1422526928}
-  feedbackText: {fileID: 210706548}
-  progressText: {fileID: 1797887700}
+  learningObjectiveText: {fileID: 801768468}
   missionCompletePanel: {fileID: 1125694385}
+  overallProgressText: {fileID: 1797887700}
   missions:
   - missionName: Understanding Walks
     targetType: 0
-    instructionText: Move between any 3 vertices in any pattern. This creates a 'walk'
-      - the most basic journey type.
-    hintText: You can repeat vertices and edges freely in a walk.
-    minimumSteps: 3
+    learningObjective: 
+    completionDelay: 3
     showRealTimeFeedback: 1
   - missionName: Creating a Trail
     targetType: 1
-    instructionText: Visit vertices without using the same bridge twice. This creates
-      a 'trail'.
-    hintText: You can revisit vertices, but don't cross the same bridge twice!
-    minimumSteps: 4
+    learningObjective: 
+    completionDelay: 3
     showRealTimeFeedback: 1
   - missionName: Following a Path
     targetType: 2
-    instructionText: Visit each vertex only once to create a 'path' - the most restrictive
-      journey type.
-    hintText: No repeated vertices allowed in a path!
-    minimumSteps: 4
+    learningObjective: 
+    completionDelay: 3
     showRealTimeFeedback: 1
 --- !u!114 &987510506
 MonoBehaviour:
@@ -2764,15 +2756,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b6b7daadab1e7747b55208b1b39db98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  journeyTypeText: {fileID: 660954429}
+  journeyStatusText: {fileID: 660954429}
   journeyHistoryText: {fileID: 1483749557}
   missionObjectiveText: {fileID: 1550896780}
-  targetJourneyType: 1
-  requireMinimumSteps: 1
-  minimumSteps: 3
-  celebrationDelay: 0.5
-  completionSound: {fileID: 0}
-  celebrationParticles: {fileID: 0}
+  feedbackText: {fileID: 210706548}
+  targetJourneyType: 0
 --- !u!1 &992776326 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7604444231708657044, guid: 4eead59d2ca69554e9356d924e52cd51, type: 3}
