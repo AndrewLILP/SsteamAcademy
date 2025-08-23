@@ -24,18 +24,18 @@ Based on recent console logs, the following critical bugs have been identified:
 ## 📋 Sprint 3 Task Checklist
 
 ### Epic 1: Journey State Management
-- [ ] **Task 1: Fix Mission Reset Logic** (5 SP)
-  - [ ] Add debug logging to `ResetJourney()` method
-  - [ ] Verify `currentJourney.Clear()` execution
-  - [ ] Ensure `startingVertex = null` assignment works
-  - [ ] Test mission transitions with clean state
-  - [ ] **AC:** All missions start with confirmed clean state
+- [ done] **Task 1: Fix Mission Reset Logic** (5 SP)
+  - [ y] Add debug logging to `ResetJourney()` method
+  - [ y] Verify `currentJourney.Clear()` execution
+  - [ y] Ensure `startingVertex = null` assignment works
+  - [ y] Test mission transitions with clean state
+  - [ y] **AC:** All missions start with confirmed clean state
 
-- [ ] **Task 2: Debug Journey Analysis Logic** (3 SP)
-  - [ ] Add logging to `AnalyzeCurrentJourney()` method
-  - [ ] Log mission completion checks in `IsMissionComplete()`
-  - [ ] Create test cases for path/trail/walk validation
-  - [ ] **AC:** Journey classification logic verified with comprehensive logging
+- [done ] **Task 2: Debug Journey Analysis Logic** (3 SP)
+  - [ y] Add logging to `AnalyzeCurrentJourney()` method
+  - [ y] Log mission completion checks in `IsMissionComplete()`
+  - [ y] Create test cases for path/trail/walk validation
+  - [ y] **AC:** Journey classification logic verified with comprehensive logging
 
 ### Epic 2: Vertex-Bridge Coordination  
 - [ ] **Task 3: Fix Missing Vertex Detection** (8 SP)
