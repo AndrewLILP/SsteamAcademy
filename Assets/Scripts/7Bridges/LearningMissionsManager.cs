@@ -2,6 +2,10 @@
 using System.Collections;
 using TMPro;
 
+// ==============================================
+// MISSION DEFINITION STRUCTURE
+// ==============================================
+
 [System.Serializable]
 public class MissionDefinition
 {
@@ -12,6 +16,7 @@ public class MissionDefinition
     public bool showRealTimeFeedback = true;
 }
 
+// Enhanced LearningMissionsManager for Sprint 3 Task 1 - Mission State Isolation
 public class LearningMissionsManager : MonoBehaviour
 {
     [Header("UI References")]
@@ -19,6 +24,10 @@ public class LearningMissionsManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI learningObjectiveText;
     [SerializeField] private GameObject missionCompletePanel;
     [SerializeField] private TextMeshProUGUI overallProgressText;
+
+    [Header("Debug Settings - Sprint 3")]
+    [SerializeField] private bool enableDebugLogging = true;
+    [SerializeField] private float missionTransitionDelay = 0.5f; // Prevent rapid state changes
 
     [Header("Mission Definitions")]
     [SerializeField]
@@ -58,7 +67,13 @@ public class LearningMissionsManager : MonoBehaviour
     private int currentMissionIndex = 0;
     private JourneyTracker journeyTracker;
     private bool missionCompleted = false;
+    private bool missionTransitionInProgress = false;
     private Coroutine completionSequence;
+    private float lastMissionStartTime = 0f;
+
+    // Sprint 3 Debug tracking
+    private int missionStartCount = 0;
+    private int instantCompletionCount = 0;
 
     void Start()
     {
@@ -70,17 +85,24 @@ public class LearningMissionsManager : MonoBehaviour
             return;
         }
 
+        // Enable debug mode on JourneyTracker if available
+        if (enableDebugLogging && journeyTracker != null)
+        {
+            journeyTracker.EnableDebugMode(true);
+        }
+
         StartMission(0);
     }
 
     void Update()
     {
-        if (missionCompleted) return;
+        if (missionCompleted || missionTransitionInProgress) return;
 
         CheckMissionProgress();
         UpdateOverallProgress();
     }
 
+    // SPRINT 3 TASK 1: Enhanced Mission Start with State Validation
     public void StartMission(int missionIndex)
     {
         if (missionIndex >= missions.Length)
@@ -88,6 +110,21 @@ public class LearningMissionsManager : MonoBehaviour
             ShowAllMissionsComplete();
             return;
         }
+
+        // Prevent rapid mission transitions
+        if (Time.time - lastMissionStartTime < missionTransitionDelay)
+        {
+            LogDebug($"Mission transition too soon - waiting {missionTransitionDelay}s between missions");
+            StartCoroutine(DelayedMissionStart(missionIndex, missionTransitionDelay));
+            return;
+        }
+
+        missionTransitionInProgress = true;
+        missionStartCount++;
+        lastMissionStartTime = Time.time;
+
+        LogDebug($"=== STARTING MISSION {missionIndex + 1} ===");
+        LogDebug($"Mission start #{missionStartCount} at time {Time.time:F2}");
 
         currentMissionIndex = missionIndex;
         var mission = missions[missionIndex];
@@ -98,11 +135,76 @@ public class LearningMissionsManager : MonoBehaviour
         {
             StopCoroutine(completionSequence);
             completionSequence = null;
+            LogDebug("Stopped previous completion sequence");
         }
 
-        // Reset and configure journey tracker for this mission
-        journeyTracker.ResetJourney();
-        journeyTracker.SetMissionType(mission.targetType);
+        // CRITICAL: Reset journey BEFORE setting mission type
+        LogDebug("Resetting journey state...");
+        
+        // Pre-reset state logging
+        if (journeyTracker != null)
+        {
+            LogDebug($"PRE-RESET: {journeyTracker.GetDebugInfo()}");
+        }
+
+        // Perform the reset
+        journeyTracker?.ResetJourney();
+
+        // Post-reset validation
+        StartCoroutine(ValidateResetState(mission));
+    }
+
+    private IEnumerator DelayedMissionStart(int missionIndex, float delay)
+    {
+        LogDebug($"Delaying mission start for {delay}s");
+        yield return new WaitForSeconds(delay);
+        StartMission(missionIndex);
+    }
+
+    // SPRINT 3 TASK 1: State Validation Coroutine
+    private IEnumerator ValidateResetState(MissionDefinition mission)
+    {
+        // Wait one frame to ensure reset operations complete
+        yield return null;
+
+        // Validate the reset worked properly
+        bool resetValid = true;
+        string validationErrors = "";
+
+        if (journeyTracker != null)
+        {
+            LogDebug($"POST-RESET: {journeyTracker.GetDebugInfo()}");
+
+            // Check journey length
+            if (journeyTracker.GetCurrentJourneyLength() != 0)
+            {
+                resetValid = false;
+                validationErrors += $"Journey not empty ({journeyTracker.GetCurrentJourneyLength()} steps); ";
+            }
+
+            // Additional validation could go here
+            // For example, checking starting vertex is null, etc.
+        }
+
+        if (!resetValid)
+        {
+            LogError($"MISSION START VALIDATION FAILED: {validationErrors}");
+            LogError("Attempting additional reset...");
+            
+            // Try additional reset
+            journeyTracker?.ResetJourney();
+            yield return null; // Wait another frame
+            
+            // Final validation
+            if (journeyTracker.GetCurrentJourneyLength() != 0)
+            {
+                LogError("CRITICAL: Cannot clear journey state - serious bug detected!");
+            }
+        }
+
+        // Now set the mission type
+        LogDebug($"Setting mission type to: {mission.targetType}");
+        journeyTracker?.SetMissionType(mission.targetType);
 
         // Update mission UI
         UpdateMissionUI(mission);
@@ -111,7 +213,10 @@ public class LearningMissionsManager : MonoBehaviour
         if (missionCompletePanel != null)
             missionCompletePanel.SetActive(false);
 
-        Debug.Log($"Started mission {missionIndex + 1}: {mission.missionName}");
+        missionTransitionInProgress = false;
+
+        LogDebug($"Mission {currentMissionIndex + 1} ({mission.missionName}) started successfully");
+        LogDebug($"=== MISSION START COMPLETE ===\n");
     }
 
     private void UpdateMissionUI(MissionDefinition mission)
@@ -127,19 +232,49 @@ public class LearningMissionsManager : MonoBehaviour
         }
     }
 
+    // SPRINT 3 TASK 1: Enhanced Mission Progress Checking
     private void CheckMissionProgress()
     {
-        // The JourneyTracker now handles all the feedback, we just check for completion
-        if (IsMissionComplete() && !missionCompleted)
+        // Don't check progress too soon after mission start
+        if (Time.time - lastMissionStartTime < 0.1f)
         {
+            return;
+        }
+
+        bool isComplete = IsMissionComplete();
+        
+        if (isComplete && !missionCompleted)
+        {
+            // Check for suspicious instant completion
+            float timeSinceMissionStart = Time.time - lastMissionStartTime;
+            if (timeSinceMissionStart < 1.0f) // Less than 1 second
+            {
+                instantCompletionCount++;
+                LogWarning($"SUSPICIOUS: Mission completed in {timeSinceMissionStart:F3}s (instant completion #{instantCompletionCount})");
+                
+                if (journeyTracker != null)
+                {
+                    LogWarning($"Mission completion details: {journeyTracker.GetDebugInfo()}");
+                }
+            }
+            
             CompleteMission();
         }
     }
 
     private bool IsMissionComplete()
     {
-        // Delegate to JourneyTracker's completion logic
-        return journeyTracker.IsMissionComplete();
+        if (journeyTracker == null) return false;
+        
+        bool complete = journeyTracker.IsMissionComplete();
+        
+        // Additional validation for Sprint 3
+        if (complete)
+        {
+            LogDebug($"Mission completion detected: {journeyTracker.GetDebugInfo()}");
+        }
+        
+        return complete;
     }
 
     private void CompleteMission()
@@ -147,7 +282,14 @@ public class LearningMissionsManager : MonoBehaviour
         missionCompleted = true;
         var mission = missions[currentMissionIndex];
 
-        Debug.Log($"Mission {currentMissionIndex + 1} Complete: {mission.missionName}");
+        LogDebug($"=== MISSION {currentMissionIndex + 1} COMPLETED ===");
+        LogDebug($"Mission: {mission.missionName}");
+        LogDebug($"Time to complete: {Time.time - lastMissionStartTime:F2}s");
+        
+        if (journeyTracker != null)
+        {
+            LogDebug($"Final state: {journeyTracker.GetDebugInfo()}");
+        }
 
         if (missionCompletePanel != null)
         {
@@ -160,16 +302,20 @@ public class LearningMissionsManager : MonoBehaviour
 
     private IEnumerator ShowCompletionSequence(MissionDefinition mission)
     {
+        LogDebug($"Starting completion sequence for {mission.missionName}");
+        
         // Show completion for specified duration
         yield return new WaitForSeconds(mission.completionDelay);
 
         // Auto-advance to next mission or show final completion
         if (currentMissionIndex < missions.Length - 1)
         {
+            LogDebug($"Auto-advancing to mission {currentMissionIndex + 2}");
             StartMission(currentMissionIndex + 1);
         }
         else
         {
+            LogDebug("All missions completed!");
             ShowAllMissionsComplete();
         }
 
@@ -178,9 +324,11 @@ public class LearningMissionsManager : MonoBehaviour
 
     private void ShowAllMissionsComplete()
     {
+        LogDebug("=== ALL MISSIONS COMPLETED ===");
+        
         if (missionTitleText != null)
         {
-            missionTitleText.text = "🎉 All Missions Complete!";
+            missionTitleText.text = "All Missions Complete!";
         }
 
         if (learningObjectiveText != null)
@@ -216,9 +364,10 @@ public class LearningMissionsManager : MonoBehaviour
         }
     }
 
-    // UI Button methods
+    // UI Button methods with enhanced validation
     public void NextMission()
     {
+        LogDebug("Next mission requested by user");
         if (currentMissionIndex < missions.Length - 1)
         {
             StartMission(currentMissionIndex + 1);
@@ -227,6 +376,7 @@ public class LearningMissionsManager : MonoBehaviour
 
     public void PreviousMission()
     {
+        LogDebug("Previous mission requested by user");
         if (currentMissionIndex > 0)
         {
             StartMission(currentMissionIndex - 1);
@@ -235,22 +385,22 @@ public class LearningMissionsManager : MonoBehaviour
 
     public void RestartCurrentMission()
     {
+        LogDebug("Mission restart requested by user");
         StartMission(currentMissionIndex);
     }
 
     public void ShowHint()
     {
         var mission = missions[currentMissionIndex];
-        var explanation = journeyTracker.GetJourneyExplanation(mission.targetType);
+        var explanation = journeyTracker?.GetJourneyExplanation(mission.targetType) ?? "Journey tracker not available";
 
-        Debug.Log($"Hint for {mission.targetType}: {explanation}");
-
-        // Could show this in a hint panel or temporary UI element
+        LogDebug($"Hint requested for {mission.targetType}: {explanation}");
     }
 
     // Public methods for external control
     public void JumpToMission(int missionIndex)
     {
+        LogDebug($"Jump to mission {missionIndex + 1} requested");
         if (missionIndex >= 0 && missionIndex < missions.Length)
         {
             StartMission(missionIndex);
@@ -270,5 +420,36 @@ public class LearningMissionsManager : MonoBehaviour
     public JourneyType GetCurrentTargetType()
     {
         return currentMissionIndex < missions.Length ? missions[currentMissionIndex].targetType : JourneyType.Invalid;
+    }
+
+    // Sprint 3 Debug methods
+    public string GetDebugInfo()
+    {
+        return $"Mission: {currentMissionIndex + 1}/{missions.Length}, " +
+               $"Completed: {missionCompleted}, " +
+               $"Transition: {missionTransitionInProgress}, " +
+               $"Starts: {missionStartCount}, " +
+               $"Instant completions: {instantCompletionCount}";
+    }
+
+    private void LogDebug(string message)
+    {
+        if (enableDebugLogging)
+        {
+            Debug.Log($"[MissionsManager] {message}");
+        }
+    }
+
+    private void LogWarning(string message)
+    {
+        if (enableDebugLogging)
+        {
+            Debug.LogWarning($"[MissionsManager] {message}");
+        }
+    }
+
+    private void LogError(string message)
+    {
+        Debug.LogError($"[MissionsManager] {message}");
     }
 }

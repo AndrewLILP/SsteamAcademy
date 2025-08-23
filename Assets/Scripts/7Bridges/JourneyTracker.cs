@@ -7,10 +7,6 @@ using UnityEngine;
 // CORE DATA STRUCTURES
 // ==============================================
 
-/// <summary>
-/// Notes: we get errors with colors: gold, orange 
-/// </summary>
-
 [System.Serializable]
 public class JourneyStep
 {
@@ -65,6 +61,7 @@ public class JourneyTypeConfig
     }
 }
 
+// Enhanced JourneyTracker with comprehensive debug logging for Sprint 3 Task 1
 public class JourneyTracker : MonoBehaviour, IPuzzleSystem
 {
     [Header("UI References")]
@@ -76,15 +73,25 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
     [Header("Mission Configuration")]
     [SerializeField] private JourneyType targetJourneyType = JourneyType.Walk;
 
+    [Header("Debug Settings - Sprint 3")]
+    [SerializeField] private bool enableDebugLogging = true;
+    [SerializeField] private bool enableVerboseStateLogging = false;
+
     private List<JourneyStep> currentJourney = new List<JourneyStep>();
     private string startingVertex = null;
     private Dictionary<JourneyType, JourneyTypeConfig> journeyConfigs;
+    
+    // Debug tracking variables
+    private int resetCount = 0;
+    private float lastResetTime = 0f;
+    private JourneyType lastTargetType = JourneyType.Invalid;
 
     public bool IsActive => true;
 
     void Awake()
     {
         InitializeJourneyConfigs();
+        LogDebug($"JourneyTracker Awake - Journey initialized with {currentJourney.Count} steps");
     }
 
     void Start()
@@ -101,9 +108,293 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
             bridge.OnBridgeCrossed += OnBridgeCrossed;
         }
 
+        LogDebug($"JourneyTracker Start - Registered with {vertices.Length} vertices and {bridges.Length} bridges");
         UpdateUI();
     }
 
+    // SPRINT 3 TASK 1: Enhanced Reset Logic with Debug Logging
+    public void ResetJourney()
+    {
+        resetCount++;
+        lastResetTime = Time.time;
+        
+        LogDebug("=== JOURNEY RESET INITIATED ===");
+        LogDebug($"Reset #{resetCount} at time {lastResetTime:F2}");
+        
+        // Log state before reset
+        LogDebug($"BEFORE RESET - Journey steps: {currentJourney.Count}");
+        LogDebug($"BEFORE RESET - Starting vertex: '{startingVertex}'");
+        LogDebug($"BEFORE RESET - Target type: {targetJourneyType}");
+        
+        if (currentJourney.Count > 0)
+        {
+            LogDebug($"BEFORE RESET - Journey path: {string.Join(" → ", currentJourney.Select(s => s.vertexId))}");
+            if (enableVerboseStateLogging)
+            {
+                for (int i = 0; i < currentJourney.Count; i++)
+                {
+                    var step = currentJourney[i];
+                    LogDebug($"  Step {i}: Vertex={step.vertexId}, Edge={step.edgeId}, Time={step.timestamp:F2}");
+                }
+            }
+        }
+
+        // Perform the reset operations with verification
+        var oldJourneyCount = currentJourney.Count;
+        var oldStartingVertex = startingVertex;
+        
+        // Clear the journey list
+        currentJourney.Clear();
+        
+        // Verify the clear operation worked
+        if (currentJourney.Count != 0)
+        {
+            LogError($"CRITICAL: currentJourney.Clear() failed! Still contains {currentJourney.Count} items");
+            // Force clear by creating new list
+            currentJourney = new List<JourneyStep>();
+            LogDebug($"Created new journey list. Count now: {currentJourney.Count}");
+        }
+        else
+        {
+            LogDebug("✓ currentJourney.Clear() successful");
+        }
+        
+        // Reset starting vertex
+        startingVertex = null;
+        
+        // Verify starting vertex reset
+        if (startingVertex != null)
+        {
+            LogError($"CRITICAL: startingVertex = null assignment failed! Still contains: '{startingVertex}'");
+            // Force reset
+            startingVertex = string.Empty;
+            startingVertex = null;
+        }
+        else
+        {
+            LogDebug("✓ startingVertex = null successful");
+        }
+        
+        // Log state after reset
+        LogDebug($"AFTER RESET - Journey steps: {currentJourney.Count}");
+        LogDebug($"AFTER RESET - Starting vertex: '{startingVertex}'");
+        LogDebug($"AFTER RESET - Target type: {targetJourneyType}");
+        
+        // Verification checks
+        bool resetSuccessful = (currentJourney.Count == 0 && startingVertex == null);
+        LogDebug($"Reset verification: {(resetSuccessful ? "✓ SUCCESS" : "✗ FAILED")}");
+        
+        if (!resetSuccessful)
+        {
+            LogError("JOURNEY RESET FAILED - State not properly cleared!");
+            // Additional diagnostic information
+            LogError($"Journey count expected: 0, actual: {currentJourney.Count}");
+            LogError($"Starting vertex expected: null, actual: '{startingVertex}'");
+        }
+        
+        // Update UI after reset
+        UpdateUI();
+        
+        LogDebug($"=== JOURNEY RESET COMPLETE ({resetCount}) ===\n");
+        
+        // Log reset summary for debugging
+        if (enableVerboseStateLogging)
+        {
+            LogDebug($"Reset Summary - Changed from {oldJourneyCount} steps to {currentJourney.Count} steps");
+            LogDebug($"Reset Summary - Changed starting vertex from '{oldStartingVertex}' to '{startingVertex}'");
+        }
+    }
+
+    // SPRINT 3 TASK 1: Enhanced Mission Type Setter with State Validation
+    public void SetMissionType(JourneyType newTarget)
+    {
+        var oldTarget = targetJourneyType;
+        targetJourneyType = newTarget;
+        
+        LogDebug($"Mission type changed: {oldTarget} → {newTarget}");
+        
+        // Validate that journey is actually reset when mission changes
+        if (oldTarget != newTarget && (currentJourney.Count > 0 || startingVertex != null))
+        {
+            LogWarning($"Mission type changed but journey state not clean! Steps: {currentJourney.Count}, StartVertex: '{startingVertex}'");
+            LogWarning("This may cause instant mission completion - consider calling ResetJourney() first");
+        }
+        
+        lastTargetType = newTarget;
+        UpdateUI();
+    }
+
+    // SPRINT 3 TASK 1: Enhanced Mission Complete Check with Debug Info
+    public bool IsMissionComplete()
+    {
+        var config = GetCurrentConfig();
+        
+        bool hasMinSteps = currentJourney.Count >= config.minimumStepsForCompletion;
+        var actualType = AnalyzeCurrentJourney();
+        bool correctType = IsJourneyTypeValid(actualType, targetJourneyType);
+        bool isComplete = hasMinSteps && correctType;
+        
+        if (enableVerboseStateLogging)
+        {
+            LogDebug($"Mission Completion Check:");
+            LogDebug($"  Steps: {currentJourney.Count}/{config.minimumStepsForCompletion} = {(hasMinSteps ? "✓" : "✗")}");
+            LogDebug($"  Type: {actualType} vs {targetJourneyType} = {(correctType ? "✓" : "✗")}");
+            LogDebug($"  Complete: {(isComplete ? "✓ YES" : "✗ NO")}");
+        }
+        
+        // Log concerning cases
+        if (isComplete && currentJourney.Count == 0)
+        {
+            LogError("CRITICAL: Mission marked complete with 0 journey steps! This indicates a state management bug.");
+        }
+        
+        if (isComplete && Time.time - lastResetTime < 0.1f)
+        {
+            LogWarning($"Mission completed immediately after reset ({Time.time - lastResetTime:F3}s) - possible state persistence issue");
+        }
+        
+        return isComplete;
+    }
+
+    public void OnVertexVisited(IVertex vertex, ICrosser crosser)
+    {
+        LogDebug($"Vertex visited: {vertex.VertexId} by {crosser.CrosserId}");
+        
+        var step = new JourneyStep(vertex.VertexId);
+
+        if (currentJourney.Count == 0)
+        {
+            startingVertex = vertex.VertexId;
+            LogDebug($"Starting vertex set to: {startingVertex}");
+        }
+
+        currentJourney.Add(step);
+        LogDebug($"Journey now has {currentJourney.Count} steps");
+        
+        UpdateUI();
+    }
+
+    public void OnBridgeCrossed(IBridge bridge, ICrosser crosser)
+    {
+        LogDebug($"Bridge crossed: {bridge.BridgeId} by {crosser.CrosserId}");
+        
+        if (currentJourney.Count > 0)
+        {
+            var lastStep = currentJourney[currentJourney.Count - 1];
+            lastStep.edgeId = bridge.BridgeId;
+            LogDebug($"Added edge {bridge.BridgeId} to step {currentJourney.Count - 1}");
+        }
+        else
+        {
+            LogWarning($"Bridge {bridge.BridgeId} crossed but no journey steps recorded - missing vertex detection?");
+        }
+
+        UpdateUI();
+    }
+
+    // SPRINT 3 TASK 1: Enhanced Journey Analysis with Debug Logging
+    private JourneyType AnalyzeCurrentJourney()
+    {
+        if (currentJourney.Count < 2)
+        {
+            LogDebug($"Journey analysis: Too few steps ({currentJourney.Count}) - defaulting to Walk");
+            return JourneyType.Walk;
+        }
+
+        var vertices = currentJourney.Select(step => step.vertexId).ToList();
+        var edges = currentJourney.Where(step => !string.IsNullOrEmpty(step.edgeId))
+                                 .Select(step => step.edgeId).ToList();
+
+        bool returnsToStart = vertices.Count > 2 && vertices.First() == vertices.Last();
+        bool hasRepeatedVertices = vertices.Count != vertices.Distinct().Count();
+        bool hasRepeatedEdges = edges.Count != edges.Distinct().Count();
+
+        LogDebug($"Journey analysis: Vertices={vertices.Count}, Edges={edges.Count}");
+        LogDebug($"  Returns to start: {returnsToStart}");
+        LogDebug($"  Repeated vertices: {hasRepeatedVertices}");
+        LogDebug($"  Repeated edges: {hasRepeatedEdges}");
+
+        JourneyType result;
+
+        if (returnsToStart)
+        {
+            var pathVertices = vertices.Take(vertices.Count - 1).ToList();
+            bool pathHasRepeatedVertices = pathVertices.Count != pathVertices.Distinct().Count();
+
+            if (!pathHasRepeatedVertices && !hasRepeatedEdges)
+            {
+                result = JourneyType.Cycle;
+            }
+            else if (!hasRepeatedEdges)
+            {
+                result = JourneyType.Circuit;
+            }
+            else
+            {
+                result = JourneyType.Walk;
+            }
+        }
+        else if (!hasRepeatedVertices)
+        {
+            result = JourneyType.Path;
+        }
+        else if (!hasRepeatedEdges)
+        {
+            result = JourneyType.Trail;
+        }
+        else
+        {
+            result = JourneyType.Walk;
+        }
+
+        LogDebug($"Journey classified as: {result}");
+        return result;
+    }
+
+    // Debug logging methods
+    private void LogDebug(string message)
+    {
+        if (enableDebugLogging)
+        {
+            Debug.Log($"[JourneyTracker] {message}");
+        }
+    }
+
+    private void LogWarning(string message)
+    {
+        if (enableDebugLogging)
+        {
+            Debug.LogWarning($"[JourneyTracker] {message}");
+        }
+    }
+
+    private void LogError(string message)
+    {
+        Debug.LogError($"[JourneyTracker] {message}");
+    }
+
+    // Public debug methods for external testing
+    public void EnableDebugMode(bool verbose = false)
+    {
+        enableDebugLogging = true;
+        enableVerboseStateLogging = verbose;
+        LogDebug($"Debug mode enabled (verbose: {verbose})");
+    }
+
+    public void DisableDebugMode()
+    {
+        enableDebugLogging = false;
+        enableVerboseStateLogging = false;
+    }
+
+    public string GetDebugInfo()
+    {
+        return $"Journey Steps: {currentJourney.Count}, Starting Vertex: '{startingVertex}', " +
+               $"Target Type: {targetJourneyType}, Reset Count: {resetCount}, " +
+               $"Last Reset: {lastResetTime:F2}s ago";
+    }
+
+    // Existing methods remain the same...
     private void InitializeJourneyConfigs()
     {
         journeyConfigs = new Dictionary<JourneyType, JourneyTypeConfig>
@@ -164,85 +455,19 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
         };
     }
 
-    public void OnVertexVisited(IVertex vertex, ICrosser crosser)
+    private JourneyTypeConfig GetCurrentConfig()
     {
-        var step = new JourneyStep(vertex.VertexId);
-
-        if (currentJourney.Count == 0)
-        {
-            startingVertex = vertex.VertexId;
-        }
-
-        currentJourney.Add(step);
-        UpdateUI();
-    }
-
-    public void OnBridgeCrossed(IBridge bridge, ICrosser crosser)
-    {
-        if (currentJourney.Count > 0)
-        {
-            var lastStep = currentJourney[currentJourney.Count - 1];
-            lastStep.edgeId = bridge.BridgeId;
-        }
-
-        UpdateUI();
-    }
-
-    private JourneyType AnalyzeCurrentJourney()
-    {
-        if (currentJourney.Count < 2)
-        {
-            return JourneyType.Walk;
-        }
-
-        var vertices = currentJourney.Select(step => step.vertexId).ToList();
-        var edges = currentJourney.Where(step => !string.IsNullOrEmpty(step.edgeId))
-                                 .Select(step => step.edgeId).ToList();
-
-        bool returnsToStart = vertices.Count > 2 && vertices.First() == vertices.Last();
-
-        if (returnsToStart)
-        {
-            var pathVertices = vertices.Take(vertices.Count - 1).ToList();
-            bool hasRepeatedVertices = pathVertices.Count != pathVertices.Distinct().Count();
-            bool hasRepeatedEdges = edges.Count != edges.Distinct().Count();
-
-            if (!hasRepeatedVertices && !hasRepeatedEdges)
-            {
-                return JourneyType.Cycle;
-            }
-            else if (!hasRepeatedEdges)
-            {
-                return JourneyType.Circuit;
-            }
-        }
-
-        bool noRepeatedVertices = vertices.Count == vertices.Distinct().Count();
-        if (noRepeatedVertices)
-        {
-            return JourneyType.Path;
-        }
-
-        bool noRepeatedEdges = edges.Count == edges.Distinct().Count();
-        if (noRepeatedEdges)
-        {
-            return JourneyType.Trail;
-        }
-
-        return JourneyType.Walk;
+        return journeyConfigs.TryGetValue(targetJourneyType, out var config)
+            ? config
+            : journeyConfigs[JourneyType.Invalid];
     }
 
     private void UpdateUI()
     {
         var config = GetCurrentConfig();
-
-        // Always show path history
         UpdatePathHistory();
-
-        // Update mission objective
         UpdateMissionObjective(config);
 
-        // Provide appropriate feedback based on progress
         if (currentJourney.Count < config.minimumStepsForClassification)
         {
             ShowProgressFeedback(config);
@@ -253,18 +478,13 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
         }
     }
 
-    private JourneyTypeConfig GetCurrentConfig()
-    {
-        return journeyConfigs.TryGetValue(targetJourneyType, out var config)
-            ? config
-            : journeyConfigs[JourneyType.Invalid];
-    }
-
     private void UpdatePathHistory()
     {
         if (journeyHistoryText != null)
         {
-            var history = string.Join(" → ", currentJourney.Select(step => step.vertexId));
+            var history = currentJourney.Count > 0 
+                ? string.Join(" → ", currentJourney.Select(step => step.vertexId))
+                : "(No journey)";
             journeyHistoryText.text = $"Journey: {history}";
         }
     }
@@ -277,7 +497,7 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
 
             if (IsMissionComplete())
             {
-                missionObjectiveText.text = $"✓ COMPLETE: {config.successMessage}";
+                missionObjectiveText.text = $"COMPLETE: {config.successMessage}";
                 missionObjectiveText.color = Color.green;
             }
             else
@@ -323,10 +543,9 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
 
     private bool IsJourneyTypeValid(JourneyType actual, JourneyType target)
     {
-        // Check if the actual journey satisfies the target requirements
         return target switch
         {
-            JourneyType.Walk => true,  // Any journey is a valid walk
+            JourneyType.Walk => true,
             JourneyType.Trail => actual == JourneyType.Trail || actual == JourneyType.Path ||
                                actual == JourneyType.Circuit || actual == JourneyType.Cycle,
             JourneyType.Path => actual == JourneyType.Path || actual == JourneyType.Cycle,
@@ -350,7 +569,6 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
             }
         }
 
-        // Provide specific guidance based on what went wrong
         return GetCorrectionGuidance(actual, target, config);
     }
 
@@ -388,26 +606,8 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
         };
     }
 
-    // Public interface methods
-    public void ResetJourney()
-    {
-        currentJourney.Clear();
-        startingVertex = null;
-        UpdateUI();
-    }
-
-    public void SetMissionType(JourneyType newTarget)
-    {
-        targetJourneyType = newTarget;
-        UpdateUI();
-    }
-
     public string GetJourneyExplanation(JourneyType journeyType)
     {
-        var config = journeyConfigs.TryGetValue(journeyType, out var value)
-            ? value
-            : journeyConfigs[JourneyType.Invalid];
-
         return journeyType switch
         {
             JourneyType.Walk => "A walk is any sequence of connected vertices and edges - complete freedom of movement.",
@@ -419,24 +619,11 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
         };
     }
 
-    // Helper method to add new journey types easily
     public void RegisterJourneyType(JourneyType type, JourneyTypeConfig config)
     {
         journeyConfigs[type] = config;
     }
 
-    // Public method for mission manager integration
-    public bool IsMissionComplete()
-    {
-        var config = GetCurrentConfig();
-        if (currentJourney.Count < config.minimumStepsForCompletion)
-            return false;
-
-        var actualType = AnalyzeCurrentJourney();
-        return IsJourneyTypeValid(actualType, targetJourneyType);
-    }
-
-    // Additional helper methods for external systems
     public int GetCurrentJourneyLength()
     {
         return currentJourney.Count;
