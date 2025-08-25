@@ -856,7 +856,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1844759515}
   - {fileID: 415664116}
   - {fileID: 192225883}
   m_Father: {fileID: 1962238533}
@@ -5518,6 +5517,8 @@ GameObject:
   - component: {fileID: 987510502}
   - component: {fileID: 987510506}
   - component: {fileID: 987510505}
+  - component: {fileID: 987510508}
+  - component: {fileID: 987510507}
   m_Layer: 0
   m_Name: Managers
   m_TagString: Untagged
@@ -5582,7 +5583,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 987510501}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71bcf2b11f5cb5442b9e1e055c318977, type: 3}
   m_Name: 
@@ -5628,6 +5629,40 @@ MonoBehaviour:
   targetJourneyType: 0
   enableDebugLogging: 1
   enableVerboseStateLogging: 0
+--- !u!114 &987510507
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 987510501}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a33e3e479dfa10748b2e2418f4c52819, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  instructionText: {fileID: 801768468}
+  progressText: {fileID: 1797887700}
+  statusText: {fileID: 584254922}
+  completionPanel: {fileID: 1125694385}
+  completionText: {fileID: 892356607}
+  exitButtonGroup: {fileID: 1844759514}
+--- !u!114 &987510508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 987510501}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b4293634bb5b13448c509d6ec8ec24a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tutorialType: 4
+  resetKey: 114
+  exitKey: 27
+  enableDebugLogging: 1
 --- !u!1 &1059436838
 GameObject:
   m_ObjectHideFlags: 0
@@ -8103,17 +8138,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1844759514}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 892356606}
-  m_Father: {fileID: 152241349}
+  m_Father: {fileID: 1962238533}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 466, y: -387.09076}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1844759516
@@ -8732,6 +8767,7 @@ RectTransform:
   - {fileID: 1550896779}
   - {fileID: 1125694386}
   - {fileID: 152241349}
+  - {fileID: 1844759515}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
