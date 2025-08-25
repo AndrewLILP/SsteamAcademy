@@ -12,7 +12,7 @@ public class MissionDefinition
     public string missionName;
     public JourneyType targetType;
     public string learningObjective;
-    public float completionDelay = 3f; // How long to show completion before next mission
+    public float completionDelay = 13f; // How long to show completion before next mission
     public bool showRealTimeFeedback = true;
 }
 
@@ -36,31 +36,31 @@ public class LearningMissionsManager : MonoBehaviour
             missionName = "Free Exploration",
             targetType = JourneyType.Walk,
             learningObjective = "Learn that any movement between connected vertices creates a 'walk' - the foundation of all journeys.",
-            completionDelay = 2f
+            completionDelay = 12f
         },
         new MissionDefinition {
             missionName = "Bridge Management",
             targetType = JourneyType.Trail,
             learningObjective = "Discover how to create a 'trail' by using each bridge only once - vertices can be revisited.",
-            completionDelay = 3f
+            completionDelay = 13f
         },
         new MissionDefinition {
             missionName = "Vertex Efficiency",
             targetType = JourneyType.Path,
             learningObjective = "Master the 'path' - the most efficient journey where each vertex is visited exactly once.",
-            completionDelay = 3f
+            completionDelay = 13f
         },
         new MissionDefinition {
             missionName = "Closed Trails",
             targetType = JourneyType.Circuit,
             learningObjective = "Create a 'circuit' - a trail that returns to where you started, using each bridge only once.",
-            completionDelay = 4f
+            completionDelay = 14f
         },
         new MissionDefinition {
             missionName = "Perfect Loops",
             targetType = JourneyType.Cycle,
             learningObjective = "Achieve a 'cycle' - a path that returns to start, visiting each vertex exactly once.",
-            completionDelay = 4f
+            completionDelay = 14f
         }
     };
 
