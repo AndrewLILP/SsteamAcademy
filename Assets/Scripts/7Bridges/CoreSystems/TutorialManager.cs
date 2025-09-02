@@ -1,4 +1,4 @@
-// TutorialManager.cs
+// TutorialManager.cs - Resilient Version
 // Main orchestration class for tutorial system using Facade pattern
 
 using UnityEngine;
@@ -7,6 +7,7 @@ using System;
 /// <summary>
 /// Central coordinator for tutorial system
 /// Implements Facade pattern to provide simple interface to complex tutorial subsystems
+/// RESILIENT VERSION - Won't crash if UI components are missing
 /// </summary>
 public class TutorialManager : MonoBehaviour, ITutorialExitHandler
 {
@@ -23,21 +24,35 @@ public class TutorialManager : MonoBehaviour, ITutorialExitHandler
     private ITutorial currentTutorial;
     private JourneyTracker journeyTracker;
     private TutorialUIManager uiManager;
+    private bool isInitialized = false;
 
     void Start()
     {
+        // Only initialize if enabled - GameManager will enable when needed
+        if (!enabled)
+        {
+            LogDebug("TutorialManager disabled - skipping initialization");
+            return;
+        }
+
         InitializeSystems();
-        CreateAndStartTutorial();
+        if (isInitialized)
+        {
+            CreateAndStartTutorial();
+        }
     }
 
     void Update()
     {
+        if (!isInitialized) return;
+
         HandleInput();
         currentTutorial?.CheckProgress();
     }
 
     /// <summary>
     /// Initialize required system dependencies and validate setup
+    /// RESILIENT - Won't crash if components are missing
     /// </summary>
     private void InitializeSystems()
     {
@@ -46,26 +61,35 @@ public class TutorialManager : MonoBehaviour, ITutorialExitHandler
 
         if (journeyTracker == null)
         {
-            Debug.LogError("TutorialManager requires a JourneyTracker in the scene!");
+            LogError("TutorialManager requires a JourneyTracker in the scene!");
+            LogError("Tutorial system will be disabled until JourneyTracker is available");
             enabled = false;
             return;
         }
 
         if (uiManager == null)
         {
-            Debug.LogError("TutorialManager requires a TutorialUIManager component!");
-            enabled = false;
-            return;
+            LogWarning("TutorialUIManager component not found - UI features will be limited");
+            LogWarning("Add TutorialUIManager component for full UI functionality");
+            // Don't disable - continue with limited functionality
         }
 
-        LogDebug($"Tutorial systems initialized for {tutorialType} tutorial");
+        isInitialized = true;
+        LogDebug($"Tutorial systems initialized for {tutorialType} tutorial (UI: {uiManager != null})");
     }
 
     /// <summary>
     /// Create and initialize the appropriate tutorial using factory pattern
+    /// RESILIENT - Handles missing UI gracefully
     /// </summary>
     private void CreateAndStartTutorial()
     {
+        if (!isInitialized)
+        {
+            LogWarning("Cannot create tutorial - systems not initialized");
+            return;
+        }
+
         // Remove existing tutorial component if present
         var existingTutorial = GetComponent<ITutorial>();
         if (existingTutorial is MonoBehaviour mb)
@@ -80,13 +104,20 @@ public class TutorialManager : MonoBehaviour, ITutorialExitHandler
         currentTutorial = tutorial;
         currentTutorial.Initialize(journeyTracker);
 
-        // Set initial UI
+        // Set initial UI - but handle missing UI manager gracefully
         var config = TutorialConfig.GetConfig(tutorialType);
-        uiManager.SetInstructionMessage(config.instructionMessage);
-        uiManager.UpdateProgressMessage(config.progressMessages[0]);
-        uiManager.UpdateStatusMessage($"Creating {tutorialType}: 0/{config.requiredSteps} steps");
 
-        LogDebug($"{config.tutorialName} tutorial created and initialized");
+        if (uiManager != null)
+        {
+            uiManager.SetInstructionMessage(config.instructionMessage);
+            uiManager.UpdateProgressMessage(config.progressMessages[0]);
+            uiManager.UpdateStatusMessage($"Creating {tutorialType}: 0/{config.requiredSteps} steps");
+            LogDebug($"{config.tutorialName} tutorial created with full UI support");
+        }
+        else
+        {
+            LogDebug($"{config.tutorialName} tutorial created with limited UI (console logging only)");
+        }
     }
 
     /// <summary>
@@ -107,17 +138,34 @@ public class TutorialManager : MonoBehaviour, ITutorialExitHandler
 
     /// <summary>
     /// Reset current tutorial to initial state
+    /// RESILIENT - Handles missing components gracefully
     /// </summary>
     public void ResetTutorial()
     {
         LogDebug("Resetting tutorial");
-        currentTutorial?.Reset();
 
-        // Reset UI
-        var config = TutorialConfig.GetConfig(tutorialType);
-        uiManager.ResetUI();
-        uiManager.UpdateProgressMessage(config.progressMessages[0]);
-        uiManager.UpdateStatusMessage($"Creating {tutorialType}: 0/{config.requiredSteps} steps");
+        // Reset tutorial if it exists
+        if (currentTutorial != null)
+        {
+            currentTutorial.Reset();
+        }
+        else
+        {
+            LogDebug("No current tutorial to reset - will be created when tutorial starts");
+        }
+
+        // Reset UI with null checks
+        if (uiManager != null)
+        {
+            var config = TutorialConfig.GetConfig(tutorialType);
+            uiManager.ResetUI();
+            uiManager.UpdateProgressMessage(config.progressMessages[0]);
+            uiManager.UpdateStatusMessage($"Creating {tutorialType}: 0/{config.requiredSteps} steps");
+        }
+        else
+        {
+            LogDebug("UI Manager not available - UI reset skipped");
+        }
     }
 
     /// <summary>
@@ -156,6 +204,12 @@ public class TutorialManager : MonoBehaviour, ITutorialExitHandler
     [ContextMenu("Restart with New Tutorial Type")]
     public void RestartTutorial()
     {
+        if (!isInitialized)
+        {
+            LogWarning("Cannot restart tutorial - systems not initialized");
+            return;
+        }
+
         LogDebug($"Restarting tutorial with type: {tutorialType}");
         CreateAndStartTutorial();
     }
@@ -169,7 +223,26 @@ public class TutorialManager : MonoBehaviour, ITutorialExitHandler
         {
             tutorialType = newType;
             LogDebug($"Tutorial type changed to: {newType}");
-            RestartTutorial();
+            if (isInitialized)
+            {
+                RestartTutorial();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Public method for GameManager to ensure clean startup
+    /// </summary>
+    public void InitializeForGameManager()
+    {
+        if (!isInitialized)
+        {
+            InitializeSystems();
+        }
+
+        if (isInitialized && currentTutorial == null)
+        {
+            CreateAndStartTutorial();
         }
     }
 
@@ -182,6 +255,19 @@ public class TutorialManager : MonoBehaviour, ITutorialExitHandler
         {
             Debug.Log($"[TutorialManager] {message}");
         }
+    }
+
+    private void LogWarning(string message)
+    {
+        if (enableDebugLogging)
+        {
+            Debug.LogWarning($"[TutorialManager] {message}");
+        }
+    }
+
+    private void LogError(string message)
+    {
+        Debug.LogError($"[TutorialManager] {message}");
     }
 
     #region Public Properties
@@ -200,6 +286,11 @@ public class TutorialManager : MonoBehaviour, ITutorialExitHandler
     /// Name of the current tutorial
     /// </summary>
     public string CurrentTutorialName => currentTutorial?.TutorialName ?? "None";
+
+    /// <summary>
+    /// Whether the tutorial system is properly initialized
+    /// </summary>
+    public bool IsInitialized => isInitialized;
 
     #endregion
 }

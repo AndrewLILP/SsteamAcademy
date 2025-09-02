@@ -1,9 +1,9 @@
-// GameManager.cs
+// GameManager.cs - Updated for Resilient TutorialManager
 using UnityEngine;
 
 /// <summary>
 /// Main game coordinator that manages Tutorial vs Mission modes
-/// Handles initial mode selection and system coordination
+/// Updated to work with resilient TutorialManager
 /// </summary>
 public class GameManager : MonoBehaviour
 {
@@ -47,6 +47,9 @@ public class GameManager : MonoBehaviour
         }
 
         ValidateReferences();
+
+        // IMPORTANT: Disable systems early to prevent initialization conflicts
+        DisableGameSystems();
     }
 
     void Start()
@@ -54,6 +57,24 @@ public class GameManager : MonoBehaviour
         // Show initial mode selection
         ShowModeSelection();
         LogDebug("GameManager started - showing mode selection");
+    }
+
+    /// <summary>
+    /// Disable game systems to prevent startup conflicts
+    /// </summary>
+    private void DisableGameSystems()
+    {
+        if (tutorialManager != null)
+        {
+            tutorialManager.enabled = false;
+            LogDebug("TutorialManager disabled at startup");
+        }
+
+        if (missionManager != null)
+        {
+            missionManager.enabled = false;
+            LogDebug("LearningMissionsManager disabled at startup");
+        }
     }
 
     /// <summary>
@@ -107,12 +128,27 @@ public class GameManager : MonoBehaviour
         if (missionUIPanel != null)
             missionUIPanel.SetActive(false);
 
-        // Enable tutorial system
+        // Enable and initialize tutorial system safely
         if (tutorialManager != null)
         {
             tutorialManager.enabled = true;
-            // Reset to ensure clean start
-            tutorialManager.ResetTutorial();
+
+            // Use new initialization method for clean startup
+            try
+            {
+                tutorialManager.InitializeForGameManager();
+                tutorialManager.ResetTutorial();
+                LogDebug("Tutorial system initialized successfully");
+            }
+            catch (System.Exception ex)
+            {
+                LogError($"Error initializing tutorial system: {ex.Message}");
+                LogError("Tutorial mode may have limited functionality");
+            }
+        }
+        else
+        {
+            LogError("TutorialManager not found - tutorial mode unavailable");
         }
 
         // Disable mission system
@@ -157,8 +193,22 @@ public class GameManager : MonoBehaviour
         if (missionManager != null)
         {
             missionManager.enabled = true;
-            // Start first mission
-            missionManager.StartMission(0);
+
+            try
+            {
+                // Start first mission
+                missionManager.StartMission(0);
+                LogDebug("Mission system started successfully");
+            }
+            catch (System.Exception ex)
+            {
+                LogError($"Error starting mission system: {ex.Message}");
+                LogError("Mission mode may have limited functionality");
+            }
+        }
+        else
+        {
+            LogError("LearningMissionsManager not found - mission mode unavailable");
         }
 
         // Disable tutorial system
@@ -196,26 +246,33 @@ public class GameManager : MonoBehaviour
     {
         if (progressTracker == null) return;
 
-        if (currentMode == GameMode.Tutorial && tutorialManager != null)
+        try
         {
-            // Check if current tutorial is complete
-            if (tutorialManager.IsTutorialComplete)
+            if (currentMode == GameMode.Tutorial && tutorialManager != null)
             {
-                var tutorialType = tutorialManager.CurrentTutorialType;
-                progressTracker.RecordTutorialCompletion(tutorialType);
-                LogDebug($"Recorded tutorial completion: {tutorialType}");
+                // Check if current tutorial is complete
+                if (tutorialManager.IsTutorialComplete)
+                {
+                    var tutorialType = tutorialManager.CurrentTutorialType;
+                    progressTracker.RecordTutorialCompletion(tutorialType);
+                    LogDebug($"Recorded tutorial completion: {tutorialType}");
+                }
+            }
+            else if (currentMode == GameMode.Mission && missionManager != null)
+            {
+                // Record current mission progress
+                var missionIndex = missionManager.GetCurrentMissionIndex();
+                var missionName = missionManager.GetCurrentMissionName();
+
+                // Check if current mission is complete (you may need to add this method)
+                // For now, we'll record the highest mission reached
+                progressTracker.RecordMissionProgress(missionIndex, missionName);
+                LogDebug($"Recorded mission progress: {missionIndex} - {missionName}");
             }
         }
-        else if (currentMode == GameMode.Mission && missionManager != null)
+        catch (System.Exception ex)
         {
-            // Record current mission progress
-            var missionIndex = missionManager.GetCurrentMissionIndex();
-            var missionName = missionManager.GetCurrentMissionName();
-
-            // Check if current mission is complete (you may need to add this method)
-            // For now, we'll record the highest mission reached
-            progressTracker.RecordMissionProgress(missionIndex, missionName);
-            LogDebug($"Recorded mission progress: {missionIndex} - {missionName}");
+            LogError($"Error recording progress: {ex.Message}");
         }
     }
 

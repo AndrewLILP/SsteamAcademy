@@ -454,27 +454,58 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
             )
         };
     }
-
     private JourneyTypeConfig GetCurrentConfig()
     {
-        return journeyConfigs.TryGetValue(targetJourneyType, out var config)
-            ? config
-            : journeyConfigs[JourneyType.Invalid];
-    }
+        // Ensure journeyConfigs is initialized
+        if (journeyConfigs == null)
+        {
+            LogDebug("Journey configs not initialized - initializing now");
+            InitializeJourneyConfigs();
+        }
 
+        // Check if targetJourneyType exists in configs
+        if (journeyConfigs != null && journeyConfigs.TryGetValue(targetJourneyType, out var config))
+        {
+            return config;
+        }
+
+        // Fallback - return Invalid config or create a safe default
+        LogWarning($"No config found for journey type: {targetJourneyType} - using fallback");
+
+        // Return a safe fallback config
+        return journeyConfigs?.ContainsKey(JourneyType.Invalid) == true
+            ? journeyConfigs[JourneyType.Invalid]
+            : new JourneyTypeConfig(
+                JourneyType.Walk, 2, 2,
+                "Basic movement between vertices",
+                "Keep exploring",
+                "Journey complete",
+                "Keep moving"
+            );
+    }
     private void UpdateUI()
     {
-        var config = GetCurrentConfig();
-        UpdatePathHistory();
-        UpdateMissionObjective(config);
+        try
+        {
+            var config = GetCurrentConfig();
+            if (config != null)
+            {
+                UpdatePathHistory();
+                UpdateMissionObjective(config);
 
-        if (currentJourney.Count < config.minimumStepsForClassification)
-        {
-            ShowProgressFeedback(config);
+                if (currentJourney.Count < config.minimumStepsForClassification)
+                {
+                    ShowProgressFeedback(config);
+                }
+                else
+                {
+                    ShowClassificationFeedback(config);
+                }
+            }
         }
-        else
+        catch (System.Exception ex)
         {
-            ShowClassificationFeedback(config);
+            LogError($"Error updating UI: {ex.Message}");
         }
     }
 
