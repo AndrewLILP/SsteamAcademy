@@ -38,6 +38,11 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
+        LogDebug("GameManager Awake - Starting immediate system disable");
+
+        // CRITICAL: Disable systems immediately before they can start
+        DisableGameSystemsImmediate();
+
         // Get or create progress tracker
         progressTracker = FindFirstObjectByType<ProgressTracker>();
         if (progressTracker == null)
@@ -47,10 +52,42 @@ public class GameManager : MonoBehaviour
         }
 
         ValidateReferences();
-
-        // IMPORTANT: Disable systems early to prevent initialization conflicts
-        DisableGameSystems();
+        LogDebug("GameManager Awake complete");
     }
+
+    /// <summary>
+    /// Immediately disable all game systems to prevent startup conflicts
+    /// </summary>
+    private void DisableGameSystemsImmediate()
+    {
+        // Method 1: Disable components immediately
+        var allTutorialManagers = FindObjectsByType<TutorialManager>(FindObjectsSortMode.None);
+        foreach (var tm in allTutorialManagers)
+        {
+            tm.enabled = false;
+            LogDebug($"TutorialManager component disabled immediately");
+        }
+
+        var allMissionManagers = FindObjectsByType<LearningMissionsManager>(FindObjectsSortMode.None);
+        foreach (var mm in allMissionManagers)
+        {
+            mm.enabled = false;
+            LogDebug($"LearningMissionsManager component disabled immediately");
+        }
+
+        // Method 2: Also disable GameObjects to be absolutely sure
+        var tutorialGO = GameObject.Find("TutorialManager");
+        if (tutorialGO != null)
+        {
+            tutorialGO.SetActive(false);
+            LogDebug("TutorialManager GameObject disabled");
+        }
+
+        // Store references for later re-enabling
+        tutorialManager = allTutorialManagers.Length > 0 ? allTutorialManagers[0] : null;
+        missionManager = allMissionManagers.Length > 0 ? allMissionManagers[0] : null;
+    }
+
 
     void Start()
     {
@@ -110,125 +147,164 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void SelectTutorialMode()
     {
-        LogDebug("Tutorial mode selected");
+        Debug.Log("[GameManager] SelectTutorialMode() called");
 
-        currentMode = GameMode.Tutorial;
-
-        // Hide selection panel
-        if (modeSelectionPanel != null)
-            modeSelectionPanel.SetActive(false);
-
-        // Show tutorial UI
-        if (tutorialUIPanel != null)
-            tutorialUIPanel.SetActive(true);
-        if (sharedUIPanel != null)
-            sharedUIPanel.SetActive(true);
-
-        // Hide mission UI
-        if (missionUIPanel != null)
-            missionUIPanel.SetActive(false);
-
-        // Enable and initialize tutorial system safely
-        if (tutorialManager != null)
+        if (currentMode == GameMode.Tutorial)
         {
-            tutorialManager.enabled = true;
+            Debug.LogWarning("[GameManager] Already in tutorial mode");
+            return;
+        }
 
-            // Use new initialization method for clean startup
-            try
+        try
+        {
+            currentMode = GameMode.Tutorial;
+
+            // Hide selection panel
+            if (modeSelectionPanel != null)
             {
+                modeSelectionPanel.SetActive(false);
+                Debug.Log("[GameManager] Mode selection panel hidden");
+            }
+
+            // Show tutorial UI
+            if (tutorialUIPanel != null)
+            {
+                tutorialUIPanel.SetActive(true);
+                Debug.Log("[GameManager] Tutorial UI panel shown");
+            }
+            if (sharedUIPanel != null)
+            {
+                sharedUIPanel.SetActive(true);
+                Debug.Log("[GameManager] Shared UI panel shown");
+            }
+
+            // Hide mission UI
+            if (missionUIPanel != null)
+            {
+                missionUIPanel.SetActive(false);
+                Debug.Log("[GameManager] Mission UI panel hidden");
+            }
+
+            // Enable tutorial system
+            if (tutorialManager != null)
+            {
+                tutorialManager.enabled = true;
+                Debug.Log("[GameManager] Tutorial system enabled");
+
+                // Initialize tutorial system
                 tutorialManager.InitializeForGameManager();
-                tutorialManager.ResetTutorial();
-                LogDebug("Tutorial system initialized successfully");
             }
-            catch (System.Exception ex)
+            else
             {
-                LogError($"Error initializing tutorial system: {ex.Message}");
-                LogError("Tutorial mode may have limited functionality");
+                Debug.LogError("[GameManager] TutorialManager not found!");
             }
+
+            // Disable mission system
+            if (missionManager != null)
+            {
+                missionManager.enabled = false;
+                Debug.Log("[GameManager] Mission system disabled");
+            }
+
+            // Reset journey for clean start
+            if (journeyTracker != null)
+            {
+                journeyTracker.ResetJourney();
+                Debug.Log("[GameManager] Journey tracker reset");
+            }
+
+            // Notify other systems
+            OnModeChanged?.Invoke(currentMode);
+            OnGameplayStarted?.Invoke();
+
+            Debug.Log("[GameManager] Tutorial mode activated successfully");
         }
-        else
+        catch (System.Exception e)
         {
-            LogError("TutorialManager not found - tutorial mode unavailable");
+            Debug.LogError($"[GameManager] Error in SelectTutorialMode: {e.Message}");
         }
-
-        // Disable mission system
-        if (missionManager != null)
-            missionManager.enabled = false;
-
-        // Reset journey for clean start
-        if (journeyTracker != null)
-            journeyTracker.ResetJourney();
-
-        // Notify other systems
-        OnModeChanged?.Invoke(currentMode);
-        OnGameplayStarted?.Invoke();
-
-        LogDebug("Tutorial mode activated");
     }
 
-    /// <summary>
-    /// User selected Mission Mode
-    /// </summary>
     public void SelectMissionMode()
     {
-        LogDebug("Mission mode selected");
+        Debug.Log("[GameManager] SelectMissionMode() called");
 
-        currentMode = GameMode.Mission;
-
-        // Hide selection panel
-        if (modeSelectionPanel != null)
-            modeSelectionPanel.SetActive(false);
-
-        // Show mission UI
-        if (missionUIPanel != null)
-            missionUIPanel.SetActive(true);
-        if (sharedUIPanel != null)
-            sharedUIPanel.SetActive(true);
-
-        // Hide tutorial UI
-        if (tutorialUIPanel != null)
-            tutorialUIPanel.SetActive(false);
-
-        // Enable mission system
-        if (missionManager != null)
+        if (currentMode == GameMode.Mission)
         {
-            missionManager.enabled = true;
+            Debug.LogWarning("[GameManager] Already in mission mode");
+            return;
+        }
 
-            try
+        try
+        {
+            currentMode = GameMode.Mission;
+
+            // Hide selection panel
+            if (modeSelectionPanel != null)
             {
+                modeSelectionPanel.SetActive(false);
+                Debug.Log("[GameManager] Mode selection panel hidden");
+            }
+
+            // Show mission UI
+            if (missionUIPanel != null)
+            {
+                missionUIPanel.SetActive(true);
+                Debug.Log("[GameManager] Mission UI panel shown");
+            }
+            if (sharedUIPanel != null)
+            {
+                sharedUIPanel.SetActive(true);
+                Debug.Log("[GameManager] Shared UI panel shown");
+            }
+
+            // Hide tutorial UI
+            if (tutorialUIPanel != null)
+            {
+                tutorialUIPanel.SetActive(false);
+                Debug.Log("[GameManager] Tutorial UI panel hidden");
+            }
+
+            // Enable mission system
+            if (missionManager != null)
+            {
+                missionManager.enabled = true;
+                Debug.Log("[GameManager] Mission system enabled");
+
                 // Start first mission
                 missionManager.StartMission(0);
-                LogDebug("Mission system started successfully");
             }
-            catch (System.Exception ex)
+            else
             {
-                LogError($"Error starting mission system: {ex.Message}");
-                LogError("Mission mode may have limited functionality");
+                Debug.LogError("[GameManager] LearningMissionsManager not found!");
             }
+
+            // Disable tutorial system
+            if (tutorialManager != null)
+            {
+                tutorialManager.enabled = false;
+                Debug.Log("[GameManager] Tutorial system disabled");
+            }
+
+            // Reset journey for clean start
+            if (journeyTracker != null)
+            {
+                journeyTracker.ResetJourney();
+                Debug.Log("[GameManager] Journey tracker reset");
+            }
+
+            // Notify other systems
+            OnModeChanged?.Invoke(currentMode);
+            OnGameplayStarted?.Invoke();
+
+            Debug.Log("[GameManager] Mission mode activated successfully");
         }
-        else
+        catch (System.Exception e)
         {
-            LogError("LearningMissionsManager not found - mission mode unavailable");
+            Debug.LogError($"[GameManager] Error in SelectMissionMode: {e.Message}");
         }
-
-        // Disable tutorial system
-        if (tutorialManager != null)
-            tutorialManager.enabled = false;
-
-        // Reset journey for clean start
-        if (journeyTracker != null)
-            journeyTracker.ResetJourney();
-
-        // Notify other systems
-        OnModeChanged?.Invoke(currentMode);
-        OnGameplayStarted?.Invoke();
-
-        LogDebug("Mission mode activated");
     }
 
-    /// <summary>
-    /// Return to mode selection (called by Back button)
-    /// </summary>
     public void ReturnToModeSelection()
     {
         LogDebug("Returning to mode selection");

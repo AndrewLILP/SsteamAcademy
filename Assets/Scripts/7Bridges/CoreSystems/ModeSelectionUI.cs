@@ -1,11 +1,14 @@
 ﻿// ModeSelectionUI.cs
+// Complete version with comprehensive debugging for button click issues
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 /// <summary>
 /// Handles the initial mode selection UI panel
 /// Shows Tutorial/Mission mode buttons and basic progress info
+/// Includes comprehensive debugging for UI interaction issues
 /// </summary>
 public class ModeSelectionUI : MonoBehaviour
 {
@@ -19,6 +22,10 @@ public class ModeSelectionUI : MonoBehaviour
     [Header("Optional References")]
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI instructionText;
+
+    [Header("Debug Options")]
+    [SerializeField] private bool enableComprehensiveDebug = true;
+    [SerializeField] private bool enableButtonClickLogging = true;
 
     private GameManager gameManager;
     private ProgressTracker progressTracker;
@@ -50,7 +57,47 @@ public class ModeSelectionUI : MonoBehaviour
             progressTracker.OnProgressUpdated += UpdateProgressDisplay;
         }
 
+        // Run comprehensive debug if enabled
+        if (enableComprehensiveDebug)
+        {
+            StartCoroutine(TestButtonSetup());
+        }
+
         Debug.Log("[ModeSelectionUI] Initialized");
+    }
+
+    void Update()
+    {
+        // Temporary keyboard shortcuts for development
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            Debug.Log("[KEYBOARD] T pressed - Tutorial Mode");
+            var gm = FindFirstObjectByType<GameManager>();
+            if (gm != null)
+            {
+                gm.SelectTutorialMode();
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            Debug.Log("[KEYBOARD] M pressed - Mission Mode");
+            var gm = FindFirstObjectByType<GameManager>();
+            if (gm != null)
+            {
+                gm.SelectMissionMode();
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Debug.Log("[KEYBOARD] ESC pressed - Mode Selection");
+            var gm = FindFirstObjectByType<GameManager>();
+            if (gm != null)
+            {
+                gm.ReturnToModeSelection();
+            }
+        }
     }
 
     void OnDestroy()
@@ -62,35 +109,72 @@ public class ModeSelectionUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Setup button click listeners
-    /// </summary>
     private void SetupButtons()
     {
-        if (tutorialModeButton != null && gameManager != null)
+        // Ensure GameManager reference is always found when needed
+        if (gameManager == null)
+        {
+            gameManager = FindFirstObjectByType<GameManager>();
+        }
+
+        if (gameManager == null)
+        {
+            Debug.LogError("[ModeSelectionUI] GameManager not found in scene!");
+            return;
+        }
+
+        Debug.Log("[ModeSelectionUI] GameManager found and assigned");
+
+        // Setup Tutorial Button with reliable reference
+        if (tutorialModeButton != null)
         {
             tutorialModeButton.onClick.RemoveAllListeners();
             tutorialModeButton.onClick.AddListener(() => {
-                Debug.Log("[ModeSelectionUI] Tutorial mode button clicked");
-                gameManager.SelectTutorialMode();
+                if (enableButtonClickLogging)
+                    Debug.Log("[ModeSelectionUI] Tutorial mode button clicked");
+
+                // Find GameManager fresh each time to ensure reliability
+                var gm = gameManager ?? FindFirstObjectByType<GameManager>();
+                if (gm != null)
+                {
+                    gm.SelectTutorialMode();
+                }
+                else
+                {
+                    Debug.LogError("[ModeSelectionUI] GameManager is null when trying to select tutorial mode!");
+                }
             });
+            Debug.Log($"[ModeSelectionUI] Tutorial button configured (interactable: {tutorialModeButton.interactable})");
         }
-        else if (tutorialModeButton == null)
+        else
         {
-            Debug.LogWarning("ModeSelectionUI: Tutorial Mode Button not assigned!");
+            Debug.LogError("[ModeSelectionUI] Tutorial Mode Button not assigned in inspector!");
         }
 
-        if (missionModeButton != null && gameManager != null)
+        // Setup Mission Button with reliable reference
+        if (missionModeButton != null)
         {
             missionModeButton.onClick.RemoveAllListeners();
             missionModeButton.onClick.AddListener(() => {
-                Debug.Log("[ModeSelectionUI] Mission mode button clicked");
-                gameManager.SelectMissionMode();
+                if (enableButtonClickLogging)
+                    Debug.Log("[ModeSelectionUI] Mission mode button clicked");
+
+                // Find GameManager fresh each time to ensure reliability
+                var gm = gameManager ?? FindFirstObjectByType<GameManager>();
+                if (gm != null)
+                {
+                    gm.SelectMissionMode();
+                }
+                else
+                {
+                    Debug.LogError("[ModeSelectionUI] GameManager is null when trying to select mission mode!");
+                }
             });
+            Debug.Log($"[ModeSelectionUI] Mission button configured (interactable: {missionModeButton.interactable})");
         }
-        else if (missionModeButton == null)
+        else
         {
-            Debug.LogWarning("ModeSelectionUI: Mission Mode Button not assigned!");
+            Debug.LogError("[ModeSelectionUI] Mission Mode Button not assigned in inspector!");
         }
     }
 
@@ -179,6 +263,169 @@ public class ModeSelectionUI : MonoBehaviour
         UpdateProgressDisplay();
     }
 
+    /// <summary>
+    /// Comprehensive debug system to identify UI interaction issues
+    /// </summary>
+    private IEnumerator TestButtonSetup()
+    {
+        yield return new WaitForSeconds(1f);
+
+        Debug.Log("=== COMPREHENSIVE UI DEBUG ===");
+
+        // Test 1: Button References
+        Debug.Log($"[DEBUG] tutorialModeButton reference: {(tutorialModeButton != null ? "ASSIGNED" : "NULL")}");
+        Debug.Log($"[DEBUG] missionModeButton reference: {(missionModeButton != null ? "ASSIGNED" : "NULL")}");
+
+        if (tutorialModeButton != null)
+        {
+            Debug.Log($"[DEBUG] Tutorial button name: '{tutorialModeButton.gameObject.name}'");
+            Debug.Log($"[DEBUG] Tutorial button path: {GetGameObjectPath(tutorialModeButton.gameObject)}");
+        }
+
+        if (missionModeButton != null)
+        {
+            Debug.Log($"[DEBUG] Mission button name: '{missionModeButton.gameObject.name}'");
+            Debug.Log($"[DEBUG] Mission button path: {GetGameObjectPath(missionModeButton.gameObject)}");
+        }
+
+        // Test 2: Find ALL buttons in scene
+        Debug.Log("=== ALL BUTTONS IN SCENE ===");
+        var allButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        Debug.Log($"[DEBUG] Total buttons found: {allButtons.Length}");
+
+        for (int i = 0; i < allButtons.Length; i++)
+        {
+            var btn = allButtons[i];
+            Debug.Log($"[DEBUG] Button {i}: '{btn.gameObject.name}' - Active: {btn.gameObject.activeInHierarchy} - Interactable: {btn.interactable}");
+            Debug.Log($"[DEBUG] Button {i} path: {GetGameObjectPath(btn.gameObject)}");
+
+            // Check if this button has text that suggests it's a mode button
+            var text = btn.GetComponentInChildren<TextMeshProUGUI>();
+            if (text != null)
+            {
+                Debug.Log($"[DEBUG] Button {i} text: '{text.text}'");
+            }
+        }
+
+        // Test 3: Manual Button Test
+        Debug.Log("=== MANUAL BUTTON TEST ===");
+        foreach (var btn in allButtons)
+        {
+            var text = btn.GetComponentInChildren<TextMeshProUGUI>();
+            if (text != null && (text.text.ToLower().Contains("tutorial") || text.text.ToLower().Contains("mission")))
+            {
+                Debug.Log($"[DEBUG] Found potential mode button: '{btn.gameObject.name}' with text: '{text.text}'");
+
+                // Add a temporary click listener to this button for testing
+                btn.onClick.AddListener(() => {
+                    Debug.Log($"[MANUAL TEST] BUTTON CLICKED: '{btn.gameObject.name}' with text: '{text.text}'");
+                });
+            }
+        }
+
+        // Test 4: Canvas Groups (these can block interaction)
+        Debug.Log("=== CANVAS GROUP TEST ===");
+        var canvasGroups = FindObjectsByType<CanvasGroup>(FindObjectsSortMode.None);
+        Debug.Log($"[DEBUG] Canvas groups found: {canvasGroups.Length}");
+
+        foreach (var cg in canvasGroups)
+        {
+            Debug.Log($"[DEBUG] CanvasGroup '{cg.gameObject.name}': interactable={cg.interactable}, blocksRaycasts={cg.blocksRaycasts}, alpha={cg.alpha}");
+            Debug.Log($"[DEBUG] CanvasGroup path: {GetGameObjectPath(cg.gameObject)}");
+        }
+
+        // Test 5: UI Hierarchy Check
+        Debug.Log("=== UI HIERARCHY CHECK ===");
+        if (tutorialModeButton != null)
+        {
+            CheckUIHierarchy(tutorialModeButton.transform, "Tutorial Button");
+        }
+        if (missionModeButton != null)
+        {
+            CheckUIHierarchy(missionModeButton.transform, "Mission Button");
+        }
+
+        // Test 6: Canvas and EventSystem validation
+        Debug.Log("=== SYSTEM VALIDATION ===");
+        var canvas = FindFirstObjectByType<Canvas>();
+        var eventSystem = FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>();
+        var graphicRaycaster = canvas?.GetComponent<GraphicRaycaster>();
+
+        Debug.Log($"[DEBUG] Canvas: {(canvas != null ? "Found" : "MISSING")}");
+        Debug.Log($"[DEBUG] GraphicRaycaster: {(graphicRaycaster != null ? "Found" : "MISSING")}");
+        Debug.Log($"[DEBUG] EventSystem: {(eventSystem != null ? "Found" : "MISSING")}");
+
+        if (canvas != null)
+        {
+            Debug.Log($"[DEBUG] Canvas render mode: {canvas.renderMode}");
+            Debug.Log($"[DEBUG] Canvas sort order: {canvas.sortingOrder}");
+            Debug.Log($"[DEBUG] Canvas enabled: {canvas.enabled}");
+        }
+
+        if (graphicRaycaster != null)
+        {
+            Debug.Log($"[DEBUG] GraphicRaycaster enabled: {graphicRaycaster.enabled}");
+        }
+
+        if (eventSystem != null)
+        {
+            Debug.Log($"[DEBUG] EventSystem enabled: {eventSystem.enabled}");
+            Debug.Log($"[DEBUG] EventSystem current selected: {eventSystem.currentSelectedGameObject}");
+        }
+
+        Debug.Log("=== END COMPREHENSIVE DEBUG ===");
+    }
+
+    /// <summary>
+    /// Helper method to get full GameObject path
+    /// </summary>
+    private string GetGameObjectPath(GameObject obj)
+    {
+        string path = obj.name;
+        Transform parent = obj.transform.parent;
+        while (parent != null)
+        {
+            path = parent.name + "/" + path;
+            parent = parent.parent;
+        }
+        return path;
+    }
+
+    /// <summary>
+    /// Helper method to check UI hierarchy for blocking elements
+    /// </summary>
+    private void CheckUIHierarchy(Transform transform, string buttonName)
+    {
+        Debug.Log($"[HIERARCHY] Checking {buttonName} hierarchy:");
+        Transform current = transform;
+        while (current != null)
+        {
+            var go = current.gameObject;
+            Debug.Log($"[HIERARCHY] - {go.name}: active={go.activeSelf}, enabled in hierarchy={go.activeInHierarchy}");
+
+            // Check for components that might block interaction
+            var canvasGroup = go.GetComponent<CanvasGroup>();
+            if (canvasGroup != null)
+            {
+                Debug.Log($"[HIERARCHY]   └ CanvasGroup: interactable={canvasGroup.interactable}, blocksRaycasts={canvasGroup.blocksRaycasts}");
+            }
+
+            var canvas = go.GetComponent<Canvas>();
+            if (canvas != null)
+            {
+                Debug.Log($"[HIERARCHY]   └ Canvas: enabled={canvas.enabled}, sortingOrder={canvas.sortingOrder}");
+            }
+
+            var rectTransform = go.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                Debug.Log($"[HIERARCHY]   └ RectTransform: position={rectTransform.anchoredPosition}, size={rectTransform.sizeDelta}");
+            }
+
+            current = current.parent;
+        }
+    }
+
     // Public methods for external control
 
     /// <summary>
@@ -217,5 +464,58 @@ public class ModeSelectionUI : MonoBehaviour
             if (buttonText != null)
                 buttonText.text = missionText;
         }
+    }
+
+    /// <summary>
+    /// Manual button test methods for Unity Inspector testing
+    /// </summary>
+    /// 
+    // Also update the manual test methods:
+    [ContextMenu("Test Tutorial Button Click")]
+    public void TestTutorialButtonClick()
+    {
+        Debug.Log("[MANUAL TEST] Tutorial button test clicked");
+
+        // Find GameManager fresh each time
+        var gm = gameManager ?? FindFirstObjectByType<GameManager>();
+        if (gm != null)
+        {
+            gm.SelectTutorialMode();
+        }
+        else
+        {
+            Debug.LogError("[MANUAL TEST] GameManager is null!");
+        }
+    }
+
+    [ContextMenu("Test Mission Button Click")]
+    public void TestMissionButtonClick()
+    {
+        Debug.Log("[MANUAL TEST] Mission button test clicked");
+
+        // Find GameManager fresh each time
+        var gm = gameManager ?? FindFirstObjectByType<GameManager>();
+        if (gm != null)
+        {
+            gm.SelectMissionMode();
+        }
+        else
+        {
+            Debug.LogError("[MANUAL TEST] GameManager is null!");
+        }
+    }
+
+    [ContextMenu("Force Button Setup")]
+    public void ForceButtonSetup()
+    {
+        Debug.Log("[MANUAL TEST] Forcing button setup...");
+        SetupButtons();
+    }
+
+    [ContextMenu("Run Debug Test")]
+    public void RunDebugTest()
+    {
+        Debug.Log("[MANUAL TEST] Running debug test...");
+        StartCoroutine(TestButtonSetup());
     }
 }

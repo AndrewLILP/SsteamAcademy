@@ -449,7 +449,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 84331323}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 228028978}
+        m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
+        m_MethodName: SelectMissionMode
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &84331323
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -597,7 +609,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &98046147
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1865,7 +1877,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: -130}
+  m_AnchoredPosition: {x: 511, y: -146}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &245856859
@@ -2063,7 +2075,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: -293.2}
+  m_AnchoredPosition: {x: 517, y: -319}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &340910450
@@ -2843,7 +2855,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: -188}
+  m_AnchoredPosition: {x: 511, y: -201}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &396812127
@@ -2956,6 +2968,8 @@ GameObject:
   - component: {fileID: 411151562}
   - component: {fileID: 411151561}
   - component: {fileID: 411151563}
+  - component: {fileID: 411151564}
+  - component: {fileID: 411151565}
   m_Layer: 0
   m_Name: TutorialManager
   m_TagString: Untagged
@@ -3012,6 +3026,60 @@ MonoBehaviour:
   completionPanel: {fileID: 571454304}
   completionText: {fileID: 1422526928}
   exitButtonGroup: {fileID: 672721101}
+--- !u!114 &411151564
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 411151560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ff64f7824d3edf41b261e63a78b52a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  config:
+    journeyType: 0
+    tutorialName: Understanding Walks
+    requiredSteps: 3
+    minimumUniqueVertices: 2
+    requiresReturnsToStart: 0
+    progressMessages:
+    - Step anywhere to begin your walk!
+    - Great start! Move to any connected vertex.
+    - Building your walk! One more step shows the freedom of walks.
+    - Perfect! Walks allow complete movement freedom.
+    completionMessage: Excellent! You've mastered walks - the foundation of all graph
+      journeys.
+    instructionMessage: Create a walk by moving between any connected vertices. Any
+      movement is valid!
+--- !u!114 &411151565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 411151560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ff64f7824d3edf41b261e63a78b52a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  config:
+    journeyType: 0
+    tutorialName: Understanding Walks
+    requiredSteps: 3
+    minimumUniqueVertices: 2
+    requiresReturnsToStart: 0
+    progressMessages:
+    - Step anywhere to begin your walk!
+    - Great start! Move to any connected vertex.
+    - Building your walk! One more step shows the freedom of walks.
+    - Perfect! Walks allow complete movement freedom.
+    completionMessage: Excellent! You've mastered walks - the foundation of all graph
+      journeys.
+    instructionMessage: Create a walk by moving between any connected vertices. Any
+      movement is valid!
 --- !u!1 &415664115
 GameObject:
   m_ObjectHideFlags: 0
@@ -3382,7 +3450,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: -92}
+  m_AnchoredPosition: {x: 0, y: -61}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &474872033
@@ -3870,7 +3938,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &559173005
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3922,7 +3990,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -6726,9 +6794,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'InstructionText
-
-'
+  m_text: Create a walk by moving between any connected vertices. Any movement is
+    valid!
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -6841,7 +6908,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -0.000030517578, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &818268816
@@ -6864,7 +6931,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Status
+  m_text: 'Creating Walk: 0/3 steps'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -6873,8 +6940,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4294967040
+  m_fontColor: {r: 0, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -6891,7 +6958,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 44.75
+  m_fontSize: 22.05
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -7171,7 +7238,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: -239}
+  m_AnchoredPosition: {x: 513, y: -262}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &918625410
@@ -8859,7 +8926,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: -186.00003}
+  m_AnchoredPosition: {x: 0, y: -238}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1304768548
@@ -9047,7 +9114,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1331411132
 RectTransform:
   m_ObjectHideFlags: 0
@@ -9144,7 +9211,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -41}
+  m_AnchoredPosition: {x: 0, y: -338}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1346001384
@@ -9450,7 +9517,7 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
-        m_CallState: 2
+        m_CallState: 1
 --- !u!114 &1376872819
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10332,7 +10399,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: -93}
+  m_AnchoredPosition: {x: 508, y: -93}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1533991008
@@ -11689,7 +11756,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1791982004}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71bcf2b11f5cb5442b9e1e055c318977, type: 3}
   m_Name: 
@@ -11784,7 +11851,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Hints
+  m_text: Step anywhere to begin your walk!
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -11794,7 +11861,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -12815,13 +12882,14 @@ GameObject:
   - component: {fileID: 2014117083}
   - component: {fileID: 2014117082}
   - component: {fileID: 2014117084}
+  - component: {fileID: 2014117085}
   m_Layer: 5
   m_Name: ModeSelectionPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2014117081
 RectTransform:
   m_ObjectHideFlags: 0
@@ -12906,6 +12974,28 @@ MonoBehaviour:
   missionProgressText: {fileID: 1304768548}
   titleText: {fileID: 1392596546}
   instructionText: {fileID: 1346001384}
+  enableComprehensiveDebug: 1
+  enableButtonClickLogging: 1
+--- !u!114 &2014117085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2014117080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03bbbc854698592409345718302f7612, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tutorialManager: {fileID: 411151561}
+  missionManager: {fileID: 1791982005}
+  journeyTracker: {fileID: 1697520711}
+  modeSelectionPanel: {fileID: 2014117080}
+  tutorialUIPanel: {fileID: 98046146}
+  missionUIPanel: {fileID: 1331411131}
+  sharedUIPanel: {fileID: 559173004}
+  enableDebugLogging: 1
 --- !u!1 &2016978885
 GameObject:
   m_ObjectHideFlags: 0
