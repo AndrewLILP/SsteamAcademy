@@ -1,7 +1,8 @@
-﻿// MinimalModeUI.cs - Ultra-clean tutorial progression system
+﻿// MinimalModeUI.cs - Ultra-clean tutorial progression system with bulletproof UI updates
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 /// <summary>
 /// Minimal UI for clean tutorial progression
@@ -35,6 +36,10 @@ public class MinimalModeUI : MonoBehaviour
     private JourneyTracker journeyTracker;
     private bool tutorialCompleted = false;
 
+    // Emergency backup system
+    private int lastKnownStepCount = -1;
+    private Coroutine uiUpdateCoroutine;
+
     // Tutorial sequence
     private readonly JourneyType[] tutorialSequence = {
         JourneyType.Walk,
@@ -52,12 +57,53 @@ public class MinimalModeUI : MonoBehaviour
 
         SetupButtons();
         ShowModeSelection();
+
+        Debug.Log("[MinimalModeUI] Initialized with all systems");
     }
 
+    // Bulletproof Update method - no conditions, no gates
     void Update()
     {
-        UpdateActiveTutorialDisplay();
+        // Force UI update every frame if components exist
+        ForceUpdateStepCounter();
         CheckTutorialCompletion();
+    }
+
+    // Simple, bulletproof UI update method
+    private void ForceUpdateStepCounter()
+    {
+        // Bypass ALL conditions - just update if components exist
+        if (journeyTracker != null && stepCounterText != null)
+        {
+            try
+            {
+                int steps = journeyTracker.GetCurrentJourneyLength();
+                int required = GetRequiredSteps(journeyTracker.GetTargetJourneyType());
+
+                string expectedText = $"Steps: {steps}/{required}";
+
+                // Force update the text
+                stepCounterText.text = expectedText;
+                stepCounterText.color = steps >= required ? Color.green : Color.white;
+
+                // Debug only when text changes to avoid spam
+                //if (Time.frameCount % 60 == 0) // Every second
+                //{
+                  //  Debug.Log($"[MinimalModeUI] UI Status: {expectedText} (Frame {Time.frameCount})");
+                //}
+            }
+            catch (System.Exception ex)
+            {
+                //Debug.LogError($"[MinimalModeUI] Exception in ForceUpdateStepCounter: {ex.Message}");
+            }
+        }
+        else
+        {
+            if (Time.frameCount % 60 == 0) // Every second  
+            {
+                //Debug.LogError($"[MinimalModeUI] Missing components - JourneyTracker: {journeyTracker != null}, StepText: {stepCounterText != null}");
+            }
+        }
     }
 
     private void SetupButtons()
@@ -84,6 +130,13 @@ public class MinimalModeUI : MonoBehaviour
         tutorialSelectionPanel?.SetActive(false);
         tutorialActivePanel?.SetActive(false);
 
+        // Stop any running UI update coroutines
+        if (uiUpdateCoroutine != null)
+        {
+            StopCoroutine(uiUpdateCoroutine);
+            uiUpdateCoroutine = null;
+        }
+
         DisableGameSystems();
         UpdateProgressSummary();
     }
@@ -96,6 +149,13 @@ public class MinimalModeUI : MonoBehaviour
         modeSelectionPanel?.SetActive(false);
         tutorialSelectionPanel?.SetActive(true);
         tutorialActivePanel?.SetActive(false);
+
+        // Stop any running UI update coroutines
+        if (uiUpdateCoroutine != null)
+        {
+            StopCoroutine(uiUpdateCoroutine);
+            uiUpdateCoroutine = null;
+        }
 
         UpdateTutorialButtons();
     }
@@ -117,21 +177,77 @@ public class MinimalModeUI : MonoBehaviour
             tutorialNameText.text = $"{type} Tutorial";
         }
 
-        // DISABLE the old tutorial system to prevent conflicts
+        // COMPLETELY DISABLE the old tutorial system to prevent conflicts
         var tutorialManager = FindFirstObjectByType<TutorialManager>();
         if (tutorialManager != null)
         {
             tutorialManager.enabled = false;
+            tutorialManager.gameObject.SetActive(false);
         }
 
-        // Set up JourneyTracker directly instead of going through GameManager
+        var missionManager = FindFirstObjectByType<LearningMissionsManager>();
+        if (missionManager != null)
+        {
+            missionManager.enabled = false;
+        }
+
+        // Set up JourneyTracker directly
         if (journeyTracker != null)
         {
+            Debug.Log($"[MinimalModeUI] Setting up tutorial: {type}");
             journeyTracker.ResetJourney();
             journeyTracker.SetMissionType(type);
+
+            // Verify the setup worked
+            Debug.Log($"[MinimalModeUI] Journey length after reset: {journeyTracker.GetCurrentJourneyLength()}");
+            Debug.Log($"[MinimalModeUI] Target type set to: {journeyTracker.GetTargetJourneyType()}");
+        }
+        else
+        {
+            //Debug.LogError("[MinimalModeUI] JourneyTracker is null!");
         }
 
-        Debug.Log($"[MinimalModeUI] Started {type} tutorial with step counter");
+        // Reset step counter
+        lastKnownStepCount = -1;
+
+        // Start emergency backup UI update system
+        if (uiUpdateCoroutine != null)
+        {
+            StopCoroutine(uiUpdateCoroutine);
+        }
+        uiUpdateCoroutine = StartCoroutine(ForceUIUpdates());
+
+        Debug.Log($"[MinimalModeUI] Started {type} tutorial with EMERGENCY UI system");
+    }
+
+    /// <summary>
+    /// Emergency backup UI update system via coroutine
+    /// </summary>
+    private IEnumerator ForceUIUpdates()
+    {
+        while (gameObject.activeInHierarchy)
+        {
+            // Force update every 0.1 seconds regardless of conditions
+            if (journeyTracker != null && stepCounterText != null)
+            {
+                int currentSteps = journeyTracker.GetCurrentJourneyLength();
+
+                // Only update if steps actually changed
+                if (currentSteps != lastKnownStepCount)
+                {
+                    lastKnownStepCount = currentSteps;
+                    int required = GetRequiredSteps(journeyTracker.GetTargetJourneyType());
+
+                    string newText = $"Steps: {currentSteps}/{required}";
+                    stepCounterText.text = newText;
+                    stepCounterText.color = currentSteps >= required ? Color.green : Color.white;
+
+                   // Debug.Log($"[MinimalModeUI] FORCED UPDATE: {newText}");
+                }
+            }
+
+            yield return new WaitForSeconds(0.1f);
+        }
     }
 
     /// <summary>
@@ -148,6 +264,12 @@ public class MinimalModeUI : MonoBehaviour
     /// </summary>
     private void ExitTutorial()
     {
+        if (uiUpdateCoroutine != null)
+        {
+            StopCoroutine(uiUpdateCoroutine);
+            uiUpdateCoroutine = null;
+        }
+
         ShowTutorialSelection();
     }
 
@@ -186,27 +308,6 @@ public class MinimalModeUI : MonoBehaviour
             bool completed = progressTracker.IsTutorialCompleted(type);
             text.text = completed ? $"{type} ✓" : type.ToString();
             text.color = completed ? Color.green : Color.white;
-        }
-    }
-
-    /// <summary>
-    /// Update step counter during active tutorial
-    /// </summary>
-    private void UpdateActiveTutorialDisplay()
-    {
-        Debug.Log($"[DEBUG] Panel active: {tutorialActivePanel.activeInHierarchy}");
-        Debug.Log($"[DEBUG] JourneyTracker: {journeyTracker != null}");
-        Debug.Log($"[DEBUG] StepCounter: {stepCounterText != null}");
-
-        if (!tutorialActivePanel.activeInHierarchy || journeyTracker == null) return;
-
-        if (stepCounterText != null)
-        {
-            int steps = journeyTracker.GetCurrentJourneyLength();
-            int required = GetRequiredSteps(journeyTracker.GetTargetJourneyType());
-
-            stepCounterText.text = $"Steps: {steps}/{required}";
-            stepCounterText.color = steps >= required ? Color.green : Color.white;
         }
     }
 
@@ -323,12 +424,81 @@ public class MinimalModeUI : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (tutorialActivePanel.activeInHierarchy)
+            if (tutorialActivePanel != null && tutorialActivePanel.activeInHierarchy)
                 ExitTutorial();
-            else if (tutorialSelectionPanel.activeInHierarchy)
+            else if (tutorialSelectionPanel != null && tutorialSelectionPanel.activeInHierarchy)
                 ShowModeSelection();
             else
                 gameManager?.ReturnToMainMenu();
+        }
+    }
+
+    // Debug and validation methods
+    [ContextMenu("Validate All UI References")]
+    public void ValidateUIReferences()
+    {
+        Debug.Log("=== MinimalModeUI UI Validation ===");
+
+        // Check main panels
+        Debug.Log($"modeSelectionPanel: {(modeSelectionPanel != null ? "ASSIGNED" : "NULL")}");
+        Debug.Log($"tutorialSelectionPanel: {(tutorialSelectionPanel != null ? "ASSIGNED" : "NULL")}");
+        Debug.Log($"tutorialActivePanel: {(tutorialActivePanel != null ? "ASSIGNED" : "NULL")}");
+
+        if (tutorialActivePanel != null)
+        {
+            Debug.Log($"tutorialActivePanel name: {tutorialActivePanel.name}");
+            Debug.Log($"tutorialActivePanel active: {tutorialActivePanel.activeSelf}");
+            Debug.Log($"tutorialActivePanel activeInHierarchy: {tutorialActivePanel.activeInHierarchy}");
+        }
+
+        // Check text components
+        Debug.Log($"tutorialNameText: {(tutorialNameText != null ? "ASSIGNED" : "NULL")}");
+        Debug.Log($"stepCounterText: {(stepCounterText != null ? "ASSIGNED" : "NULL")}");
+
+        if (stepCounterText != null)
+        {
+            Debug.Log($"stepCounterText name: {stepCounterText.gameObject.name}");
+            Debug.Log($"stepCounterText active: {stepCounterText.gameObject.activeInHierarchy}");
+            Debug.Log($"stepCounterText current text: '{stepCounterText.text}'");
+            Debug.Log($"stepCounterText font: {stepCounterText.font}");
+            Debug.Log($"stepCounterText fontSize: {stepCounterText.fontSize}");
+            Debug.Log($"stepCounterText color: {stepCounterText.color}");
+        }
+
+        // Check systems
+        Debug.Log($"gameManager: {(gameManager != null ? "ASSIGNED" : "NULL")}");
+        Debug.Log($"progressTracker: {(progressTracker != null ? "ASSIGNED" : "NULL")}");
+        Debug.Log($"journeyTracker: {(journeyTracker != null ? "ASSIGNED" : "NULL")}");
+
+        if (journeyTracker != null)
+        {
+            Debug.Log($"journeyTracker current length: {journeyTracker.GetCurrentJourneyLength()}");
+            Debug.Log($"journeyTracker target type: {journeyTracker.GetTargetJourneyType()}");
+        }
+
+        Debug.Log("=== End UI Validation ===");
+    }
+
+    [ContextMenu("Force UI Update")]
+    public void ForceUIUpdate()
+    {
+        Debug.Log("[MinimalModeUI] Forcing UI update...");
+        ForceUpdateStepCounter();
+    }
+
+    [ContextMenu("Test Tutorial Start")]
+    public void TestTutorialStart()
+    {
+        Debug.Log("[MinimalModeUI] Testing tutorial start...");
+        StartTutorial(JourneyType.Walk);
+    }
+
+    void OnDestroy()
+    {
+        // Clean up coroutines
+        if (uiUpdateCoroutine != null)
+        {
+            StopCoroutine(uiUpdateCoroutine);
         }
     }
 }

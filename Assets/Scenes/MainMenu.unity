@@ -267,9 +267,6 @@ GameObject:
   m_Component:
   - component: {fileID: 227528720}
   - component: {fileID: 227528719}
-  - component: {fileID: 227528718}
-  - component: {fileID: 227528717}
-  - component: {fileID: 227528716}
   - component: {fileID: 227528721}
   m_Layer: 0
   m_Name: GameManager
@@ -278,90 +275,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &227528716
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 227528715}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b6b7daadab1e7747b55208b1b39db98, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  journeyStatusText: {fileID: 0}
-  journeyHistoryText: {fileID: 0}
-  missionObjectiveText: {fileID: 0}
-  feedbackText: {fileID: 0}
-  targetJourneyType: 0
-  enableDebugLogging: 1
-  enableVerboseStateLogging: 0
---- !u!114 &227528717
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 227528715}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71bcf2b11f5cb5442b9e1e055c318977, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  missionTitleText: {fileID: 0}
-  learningObjectiveText: {fileID: 0}
-  missionCompletePanel: {fileID: 0}
-  overallProgressText: {fileID: 0}
-  enableDebugLogging: 1
-  missionTransitionDelay: 0.5
-  missions:
-  - missionName: Free Exploration
-    targetType: 0
-    learningObjective: Learn that any movement between connected vertices creates
-      a 'walk' - the foundation of all journeys.
-    completionDelay: 12
-    showRealTimeFeedback: 1
-  - missionName: Bridge Management
-    targetType: 1
-    learningObjective: Discover how to create a 'trail' by using each bridge only
-      once - vertices can be revisited.
-    completionDelay: 13
-    showRealTimeFeedback: 1
-  - missionName: Vertex Efficiency
-    targetType: 2
-    learningObjective: Master the 'path' - the most efficient journey where each
-      vertex is visited exactly once.
-    completionDelay: 13
-    showRealTimeFeedback: 1
-  - missionName: Closed Trails
-    targetType: 3
-    learningObjective: Create a 'circuit' - a trail that returns to where you started,
-      using each bridge only once.
-    completionDelay: 14
-    showRealTimeFeedback: 1
-  - missionName: Perfect Loops
-    targetType: 4
-    learningObjective: Achieve a 'cycle' - a path that returns to start, visiting
-      each vertex exactly once.
-    completionDelay: 14
-    showRealTimeFeedback: 1
---- !u!114 &227528718
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 227528715}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b4293634bb5b13448c509d6ec8ec24a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  tutorialType: 0
-  resetKey: 114
-  exitKey: 27
-  enableDebugLogging: 1
 --- !u!114 &227528719
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -376,13 +289,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainMenuSceneName: MainMenu
   gameSceneName: MVP2
-  tutorialManager: {fileID: 227528718}
-  missionManager: {fileID: 227528717}
-  journeyTracker: {fileID: 227528716}
-  modeSelectionPanel: {fileID: 0}
-  tutorialUIPanel: {fileID: 0}
-  missionUIPanel: {fileID: 0}
-  sharedUIPanel: {fileID: 0}
+  tutorialManager: {fileID: 0}
+  missionManager: {fileID: 0}
+  journeyTracker: {fileID: 0}
   enableDebugLogging: 1
 --- !u!4 &227528720
 Transform:

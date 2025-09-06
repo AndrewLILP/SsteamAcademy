@@ -436,25 +436,23 @@ public class GameManager : MonoBehaviour
 
         currentMode = GameMode.Tutorial;
 
-        // Enable tutorial system
+        // COMPLETELY DISABLE the old tutorial system
         if (tutorialManager != null)
         {
-            tutorialManager.enabled = true;
-            tutorialManager.ChangeTutorialType(tutorialType);
+            tutorialManager.enabled = false;
+            tutorialManager.gameObject.SetActive(false);
         }
 
-        // Disable mission system
+        // DISABLE mission system
         if (missionManager != null)
             missionManager.enabled = false;
 
-        // Reset journey for clean start
-        if (journeyTracker != null)
-            journeyTracker.ResetJourney();
+        // Let MinimalModeUI handle everything - DON'T reset journey here
+        // The MinimalModeUI will handle the reset and setup
 
         OnModeChanged?.Invoke(currentMode);
         OnGameplayStarted?.Invoke();
     }
-
     #endregion
 
     /// <summary>
