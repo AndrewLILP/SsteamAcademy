@@ -609,7 +609,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &98046147
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1790,6 +1790,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   completedTutorials: []
   completedMissions: []
+  enablePersistence: 1
+  saveImmediately: 1
   enableDebugLogging: 1
   showProgressInInspector: 1
 --- !u!114 &228028978
@@ -1804,6 +1806,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03bbbc854698592409345718302f7612, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mainMenuSceneName: MainMenu
+  gameSceneName: MVP2
   tutorialManager: {fileID: 411151561}
   missionManager: {fileID: 1791982005}
   journeyTracker: {fileID: 1697520711}
@@ -12988,6 +12992,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03bbbc854698592409345718302f7612, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mainMenuSceneName: MainMenu
+  gameSceneName: MVP2
   tutorialManager: {fileID: 411151561}
   missionManager: {fileID: 1791982005}
   journeyTracker: {fileID: 1697520711}
