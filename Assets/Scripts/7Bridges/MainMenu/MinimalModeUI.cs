@@ -1,12 +1,13 @@
-﻿// MinimalModeUI.cs - Ultra-clean tutorial progression system with bulletproof UI updates
+﻿// MinimalModeUI.cs - Ultra-clean tutorial progression system with educational feedback
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 
 /// <summary>
-/// Minimal UI for clean tutorial progression
+/// Minimal UI for clean tutorial progression with educational feedback
 /// Auto-advances through tutorial sequence: Walk → Trail → Path → Circuit → Cycle
+/// Integrates with EducationalFeedbackManager for contextual learning messages
 /// </summary>
 public class MinimalModeUI : MonoBehaviour
 {
@@ -34,7 +35,9 @@ public class MinimalModeUI : MonoBehaviour
     private GameManager gameManager;
     private ProgressTracker progressTracker;
     private JourneyTracker journeyTracker;
+    private EducationalFeedbackManager educationalFeedback;
     private bool tutorialCompleted = false;
+    private bool showingEducationalMessage = false;
 
     // Emergency backup system
     private int lastKnownStepCount = -1;
@@ -55,10 +58,17 @@ public class MinimalModeUI : MonoBehaviour
         progressTracker = ProgressTracker.Instance;
         journeyTracker = FindFirstObjectByType<JourneyTracker>();
 
+        // Initialize educational feedback
+        educationalFeedback = GetComponent<EducationalFeedbackManager>();
+        if (educationalFeedback == null)
+        {
+            educationalFeedback = gameObject.AddComponent<EducationalFeedbackManager>();
+        }
+
         SetupButtons();
         ShowModeSelection();
 
-        Debug.Log("[MinimalModeUI] Initialized with all systems");
+        Debug.Log("[MinimalModeUI] Initialized with all systems including educational feedback");
     }
 
     // Bulletproof Update method - no conditions, no gates
@@ -72,6 +82,9 @@ public class MinimalModeUI : MonoBehaviour
     // Simple, bulletproof UI update method
     private void ForceUpdateStepCounter()
     {
+        // Skip updating if showing educational message
+        if (showingEducationalMessage) return;
+
         // Bypass ALL conditions - just update if components exist
         if (journeyTracker != null && stepCounterText != null)
         {
@@ -89,12 +102,12 @@ public class MinimalModeUI : MonoBehaviour
                 // Debug only when text changes to avoid spam
                 //if (Time.frameCount % 60 == 0) // Every second
                 //{
-                  //  Debug.Log($"[MinimalModeUI] UI Status: {expectedText} (Frame {Time.frameCount})");
+                //  Debug.Log($"[MinimalModeUI] UI Status: {expectedText} (Frame {Time.frameCount})");
                 //}
             }
             catch (System.Exception ex)
             {
-                //Debug.LogError($"[MinimalModeUI] Exception in ForceUpdateStepCounter: {ex.Message}");
+                Debug.LogError($"[MinimalModeUI] Exception in ForceUpdateStepCounter: {ex.Message}");
             }
         }
         else
@@ -137,6 +150,12 @@ public class MinimalModeUI : MonoBehaviour
             uiUpdateCoroutine = null;
         }
 
+        // End educational feedback
+        if (educationalFeedback != null)
+        {
+            educationalFeedback.EndTutorialFeedback();
+        }
+
         DisableGameSystems();
         UpdateProgressSummary();
     }
@@ -155,6 +174,12 @@ public class MinimalModeUI : MonoBehaviour
         {
             StopCoroutine(uiUpdateCoroutine);
             uiUpdateCoroutine = null;
+        }
+
+        // End educational feedback
+        if (educationalFeedback != null)
+        {
+            educationalFeedback.EndTutorialFeedback();
         }
 
         UpdateTutorialButtons();
@@ -207,6 +232,12 @@ public class MinimalModeUI : MonoBehaviour
             //Debug.LogError("[MinimalModeUI] JourneyTracker is null!");
         }
 
+        // Start educational feedback
+        if (educationalFeedback != null)
+        {
+            educationalFeedback.StartTutorialFeedback(type);
+        }
+
         // Reset step counter
         lastKnownStepCount = -1;
 
@@ -217,7 +248,7 @@ public class MinimalModeUI : MonoBehaviour
         }
         uiUpdateCoroutine = StartCoroutine(ForceUIUpdates());
 
-        Debug.Log($"[MinimalModeUI] Started {type} tutorial with EMERGENCY UI system");
+        Debug.Log($"[MinimalModeUI] Started {type} tutorial with EMERGENCY UI system and educational feedback");
     }
 
     /// <summary>
@@ -228,7 +259,7 @@ public class MinimalModeUI : MonoBehaviour
         while (gameObject.activeInHierarchy)
         {
             // Force update every 0.1 seconds regardless of conditions
-            if (journeyTracker != null && stepCounterText != null)
+            if (journeyTracker != null && stepCounterText != null && !showingEducationalMessage)
             {
                 int currentSteps = journeyTracker.GetCurrentJourneyLength();
 
@@ -242,7 +273,7 @@ public class MinimalModeUI : MonoBehaviour
                     stepCounterText.text = newText;
                     stepCounterText.color = currentSteps >= required ? Color.green : Color.white;
 
-                   // Debug.Log($"[MinimalModeUI] FORCED UPDATE: {newText}");
+                    // Debug.Log($"[MinimalModeUI] FORCED UPDATE: {newText}");
                 }
             }
 
@@ -268,6 +299,12 @@ public class MinimalModeUI : MonoBehaviour
         {
             StopCoroutine(uiUpdateCoroutine);
             uiUpdateCoroutine = null;
+        }
+
+        // End educational feedback
+        if (educationalFeedback != null)
+        {
+            educationalFeedback.EndTutorialFeedback();
         }
 
         ShowTutorialSelection();
@@ -335,6 +372,12 @@ public class MinimalModeUI : MonoBehaviour
 
         // Record completion
         progressTracker?.RecordTutorialCompletion(completedType);
+
+        // Notify educational feedback system
+        if (educationalFeedback != null)
+        {
+            educationalFeedback.OnTutorialCompleted(completedType);
+        }
 
         // Auto-advance to next tutorial
         var nextTutorial = GetNextTutorial(completedType);
@@ -419,6 +462,32 @@ public class MinimalModeUI : MonoBehaviour
             missionManager.enabled = false;
     }
 
+    /// <summary>
+    /// Show educational message in step counter area
+    /// Called by EducationalFeedbackManager
+    /// </summary>
+    public void ShowEducationalMessage(string message)
+    {
+        if (stepCounterText != null)
+        {
+            showingEducationalMessage = true;
+            stepCounterText.text = message;
+            stepCounterText.color = Color.cyan; // Different color for educational messages
+            Debug.Log($"[MinimalModeUI] Showing educational message: {message}");
+        }
+    }
+
+    /// <summary>
+    /// Revert to normal step counter display
+    /// Called by EducationalFeedbackManager
+    /// </summary>
+    public void RevertToStepCounter()
+    {
+        showingEducationalMessage = false;
+        Debug.Log("[MinimalModeUI] Reverted to step counter display");
+        // ForceUpdateStepCounter will be called on next Update
+    }
+
     // Keyboard shortcuts
     void LateUpdate()
     {
@@ -469,6 +538,7 @@ public class MinimalModeUI : MonoBehaviour
         Debug.Log($"gameManager: {(gameManager != null ? "ASSIGNED" : "NULL")}");
         Debug.Log($"progressTracker: {(progressTracker != null ? "ASSIGNED" : "NULL")}");
         Debug.Log($"journeyTracker: {(journeyTracker != null ? "ASSIGNED" : "NULL")}");
+        Debug.Log($"educationalFeedback: {(educationalFeedback != null ? "ASSIGNED" : "NULL")}");
 
         if (journeyTracker != null)
         {
