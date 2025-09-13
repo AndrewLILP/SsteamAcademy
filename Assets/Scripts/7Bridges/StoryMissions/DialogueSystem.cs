@@ -66,43 +66,52 @@ public class DialogueSystem : MonoBehaviour
     /// <summary>
     /// Show dialogue with speaker name
     /// </summary>
+    /// 
     public void ShowDialogue(string dialogue, string speaker = "Narrator")
     {
-        if (string.IsNullOrEmpty(dialogue))
-        {
-            LogDebug("Empty dialogue provided");
-            return;
-        }
-
-        currentDialogue = dialogue;
-        dialogueActive = true;
+        LogDebug($"ShowDialogue called with: {dialogue.Substring(0, Mathf.Min(30, dialogue.Length))}...");
 
         // Show dialogue panel
         if (dialoguePanel != null)
+        {
+            LogDebug($"dialoguePanel found, current active state: {dialoguePanel.activeSelf}");
             dialoguePanel.SetActive(true);
+            LogDebug($"dialoguePanel activated, new active state: {dialoguePanel.activeSelf}");
+            LogDebug($"dialoguePanel activeInHierarchy: {dialoguePanel.activeInHierarchy}");
+        }
+        else
+        {
+            LogDebug("ERROR: dialoguePanel is NULL!");
+        }
 
         // Set speaker name
         if (speakerNameText != null)
         {
             speakerNameText.text = speaker;
-            speakerNameText.gameObject.SetActive(!string.IsNullOrEmpty(speaker));
+            LogDebug($"Speaker set to: {speaker}");
         }
-
-        // Start typing effect or show immediately
-        if (enableTypewriter && dialogueText != null)
+        else
         {
-            StartTypingEffect(dialogue);
+            LogDebug("WARNING: speakerNameText is NULL");
         }
-        else if (dialogueText != null)
+
+        // Check Canvas state
+        var canvas = dialoguePanel.GetComponentInParent<Canvas>();
+        if (canvas != null)
         {
-            dialogueText.text = dialogue;
+            LogDebug($"Canvas found: {canvas.name}");
+            LogDebug($"Canvas active: {canvas.gameObject.activeSelf}");
+            LogDebug($"Canvas activeInHierarchy: {canvas.gameObject.activeInHierarchy}");
+
+            // FORCE ACTIVATE CANVAS
+            canvas.gameObject.SetActive(true);
+            LogDebug($"Canvas forced active, new state: {canvas.gameObject.activeSelf}");
         }
-
-        // Show continue button
-        if (continueButton != null)
-            continueButton.gameObject.SetActive(true);
-
-        LogDebug($"Showing dialogue: {dialogue.Substring(0, Mathf.Min(30, dialogue.Length))}...");
+        else
+        {
+            LogDebug("ERROR: No Canvas found!");
+        }
+        // Rest of your existing code...
     }
 
     /// <summary>

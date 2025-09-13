@@ -79,6 +79,18 @@ public class MinimalModeUI : MonoBehaviour
         CheckTutorialCompletion();
     }
 
+    /// <summary>
+    /// Hide all UI panels but keep the Canvas active for other systems
+    /// </summary>
+    public void HideAllPanels()
+    {
+        modeSelectionPanel?.SetActive(false);
+        tutorialSelectionPanel?.SetActive(false);
+        tutorialActivePanel?.SetActive(false);
+
+        Debug.Log("[MinimalModeUI] All panels hidden for story mode");
+    }
+
     // Simple, bulletproof UI update method
     private void ForceUpdateStepCounter()
     {
@@ -571,4 +583,6 @@ public class MinimalModeUI : MonoBehaviour
             StopCoroutine(uiUpdateCoroutine);
         }
     }
+
+
 }

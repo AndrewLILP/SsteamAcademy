@@ -92,10 +92,18 @@ public class StoryManager : MonoBehaviour
             journeyTracker.SetMissionType(JourneyType.Walk);
         }
 
+
         // Show introduction
-        StartCoroutine(ShowIntroduction());
+        //StartCoroutine(ShowIntroduction());
+        StartCoroutine(DelayedStart());
 
         LogDebug("Königsberg story started");
+    }
+
+    private IEnumerator DelayedStart()
+    {
+        yield return new WaitForSeconds(2f); // Wait 2 seconds
+        StartCoroutine(ShowIntroduction());
     }
 
     /// <summary>

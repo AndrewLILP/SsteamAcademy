@@ -388,7 +388,8 @@ public class GameManager : MonoBehaviour
 
         // Hide MinimalModeUI (used for tutorials)
         if (minimalModeUI != null)
-            minimalModeUI.gameObject.SetActive(false);
+            //minimalModeUI.gameObject.SetActive(false);
+            minimalModeUI.HideAllPanels();
 
         // COMPLETELY DISABLE old systems
         var tutorialManager = FindFirstObjectByType<TutorialManager>();
