@@ -62,26 +62,24 @@ public class DialogueSystem : MonoBehaviour
 
         LogDebug("DialogueSystem initialized");
     }
-
-    /// <summary>
-    /// Show dialogue with speaker name
-    /// </summary>
-    /// 
     public void ShowDialogue(string dialogue, string speaker = "Narrator")
     {
         LogDebug($"ShowDialogue called with: {dialogue.Substring(0, Mathf.Min(30, dialogue.Length))}...");
 
+        // Store current dialogue for typewriter effect
+        currentDialogue = dialogue;
+        dialogueActive = true;
+
         // Show dialogue panel
         if (dialoguePanel != null)
         {
-            LogDebug($"dialoguePanel found, current active state: {dialoguePanel.activeSelf}");
             dialoguePanel.SetActive(true);
-            LogDebug($"dialoguePanel activated, new active state: {dialoguePanel.activeSelf}");
-            LogDebug($"dialoguePanel activeInHierarchy: {dialoguePanel.activeInHierarchy}");
+            LogDebug($"dialoguePanel activated");
         }
         else
         {
             LogDebug("ERROR: dialoguePanel is NULL!");
+            return;
         }
 
         // Set speaker name
@@ -90,33 +88,31 @@ public class DialogueSystem : MonoBehaviour
             speakerNameText.text = speaker;
             LogDebug($"Speaker set to: {speaker}");
         }
-        else
-        {
-            LogDebug("WARNING: speakerNameText is NULL");
-        }
 
-        // Check Canvas state
-        var canvas = dialoguePanel.GetComponentInParent<Canvas>();
-        if (canvas != null)
+        // **THIS IS THE MISSING PIECE** - Actually set the dialogue text
+        if (dialogueText != null)
         {
-            LogDebug($"Canvas found: {canvas.name}");
-            LogDebug($"Canvas active: {canvas.gameObject.activeSelf}");
-            LogDebug($"Canvas activeInHierarchy: {canvas.gameObject.activeInHierarchy}");
-
-            // FORCE ACTIVATE CANVAS
-            canvas.gameObject.SetActive(true);
-            LogDebug($"Canvas forced active, new state: {canvas.gameObject.activeSelf}");
+            if (enableTypewriter)
+            {
+                StartTypingEffect(dialogue);
+            }
+            else
+            {
+                dialogueText.text = dialogue;
+            }
+            LogDebug($"Dialogue text set: {dialogue.Substring(0, Mathf.Min(50, dialogue.Length))}...");
         }
         else
         {
-            LogDebug("ERROR: No Canvas found!");
+            LogDebug("ERROR: dialogueText component is NULL!");
         }
-        // Rest of your existing code...
+
+        // Show continue button
+        if (continueButton != null)
+        {
+            continueButton.gameObject.SetActive(true);
+        }
     }
-
-    /// <summary>
-    /// Hide dialogue panel
-    /// </summary>
     public void HideDialogue()
     {
         if (dialoguePanel != null)
