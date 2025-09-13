@@ -96,8 +96,8 @@ public class MainMenuManager : MonoBehaviour
         {
             missionModeButton.onClick.RemoveAllListeners();
             missionModeButton.onClick.AddListener(() => {
-                LogDebug("Mission Mode button clicked");
-                gameManager?.LoadGameForMission();
+                LogDebug("Mission/Story Mode button clicked");
+                gameManager?.LoadGameForStory();
             });
         }
 
@@ -182,7 +182,7 @@ public class MainMenuManager : MonoBehaviour
                 missionDirectButtons[i].onClick.RemoveAllListeners();
                 missionDirectButtons[i].onClick.AddListener(() => {
                     LogDebug($"Direct mission button clicked: Mission {missionIndex + 1}");
-                    gameManager?.LoadGameForMission(missionIndex);
+                    gameManager?.LoadGameForStory();
                 });
 
                 // Update button text
@@ -286,7 +286,7 @@ public class MainMenuManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.M))
         {
             LogDebug("Keyboard: Mission mode");
-            gameManager?.LoadGameForMission();
+            gameManager?.LoadGameForStory();
         }
 
         // Direct tutorial shortcuts (1-5)

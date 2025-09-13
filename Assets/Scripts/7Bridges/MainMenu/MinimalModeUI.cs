@@ -286,7 +286,7 @@ public class MinimalModeUI : MonoBehaviour
     /// </summary>
     private void StartMissions()
     {
-        gameManager?.SelectMissionMode();
+        gameManager.SelectStoryMode();
         gameObject.SetActive(false);
     }
 

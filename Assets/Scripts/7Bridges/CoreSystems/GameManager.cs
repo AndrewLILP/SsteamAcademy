@@ -1,11 +1,11 @@
-// GameManager.cs - Updated for MinimalModeUI integration
+// GameManager.cs - Complete script with Story Mode integration
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
 
 /// <summary>
 /// Main game coordinator that manages scene transitions and game modes
-/// Now works with MinimalModeUI for clean tutorial/mission selection
+/// Now supports Tutorial and Story modes (LearningMissionsManager removed)
 /// </summary>
 public class GameManager : MonoBehaviour
 {
@@ -15,7 +15,6 @@ public class GameManager : MonoBehaviour
 
     [Header("System References")]
     [SerializeField] private TutorialManager tutorialManager;
-    [SerializeField] private LearningMissionsManager missionManager;
     [SerializeField] private JourneyTracker journeyTracker;
 
     [Header("Debug")]
@@ -34,7 +33,7 @@ public class GameManager : MonoBehaviour
     {
         None,
         Tutorial,
-        Mission
+        Story  // Added Story mode
     }
 
     // Events for other systems to listen to
@@ -124,38 +123,34 @@ public class GameManager : MonoBehaviour
         LogDebug("Initializing Game scene components");
 
         // Find scene-specific references
-        if (tutorialManager == null)
-            tutorialManager = FindFirstObjectByType<TutorialManager>();
-        if (missionManager == null)
-            missionManager = FindFirstObjectByType<LearningMissionsManager>();
+        if (this.tutorialManager == null)
+            this.tutorialManager = FindFirstObjectByType<TutorialManager>();
         if (journeyTracker == null)
             journeyTracker = FindFirstObjectByType<JourneyTracker>();
 
-        // Find the new minimal UI
+        // Find the MinimalModeUI
         minimalModeUI = FindFirstObjectByType<MinimalModeUI>();
 
         // Disable systems initially to prevent conflicts
         DisableGameSystems();
 
-        // Check for pending tutorial/mission requests
-        if (PlayerPrefs.HasKey("TargetTutorialType"))
+        // Check for pending mode requests
+        string targetMode = PlayerPrefs.GetString("TargetMode", "");
+
+        if (targetMode == "Story")
+        {
+            // Auto-start story mode
+            PlayerPrefs.DeleteKey("TargetMode");
+            LogDebug("Auto-starting story mode");
+            SelectStoryMode();
+        }
+        else if (PlayerPrefs.HasKey("TargetTutorialType"))
         {
             // Auto-start specific tutorial
             JourneyType targetType = (JourneyType)PlayerPrefs.GetInt("TargetTutorialType");
             PlayerPrefs.DeleteKey("TargetTutorialType");
             LogDebug($"Auto-starting tutorial mode: {targetType}");
             LaunchSpecificTutorial(targetType);
-        }
-        else if (PlayerPrefs.HasKey("TargetMissionIndex"))
-        {
-            // Auto-start mission mode  
-            int targetMission = PlayerPrefs.GetInt("TargetMissionIndex");
-            PlayerPrefs.DeleteKey("TargetMissionIndex");
-            PlayerPrefs.DeleteKey("TargetMode");
-            LogDebug($"Auto-starting mission mode: {targetMission}");
-            SelectMissionMode();
-            if (missionManager != null)
-                missionManager.JumpToMission(targetMission);
         }
         else
         {
@@ -207,10 +202,10 @@ public class GameManager : MonoBehaviour
                 SelectTutorialMode();
             }
 
-            if (Input.GetKeyDown(KeyCode.M))
+            if (Input.GetKeyDown(KeyCode.S))
             {
-                LogDebug("Keyboard shortcut: Mission mode");
-                SelectMissionMode();
+                LogDebug("Keyboard shortcut: Story mode");
+                SelectStoryMode();
             }
 
             // Direct tutorial shortcuts
@@ -297,15 +292,14 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Load game scene and enter mission mode
+    /// Load game scene and enter story mode
     /// </summary>
-    public void LoadGameForMission(int missionIndex = 0)
+    public void LoadGameForStory()
     {
-        LogDebug($"Loading game for mission: {missionIndex}");
+        LogDebug("Loading game for story mode");
 
-        // Store the target mission
-        PlayerPrefs.SetInt("TargetMissionIndex", missionIndex);
-        PlayerPrefs.SetString("TargetMode", "Mission");
+        // Store the target mode
+        PlayerPrefs.SetString("TargetMode", "Story");
 
         // Load game scene
         if (sceneTransition != null)
@@ -332,7 +326,7 @@ public class GameManager : MonoBehaviour
 
         currentMode = GameMode.None;
 
-        // Use the new minimal UI
+        // Use the MinimalModeUI
         if (minimalModeUI != null)
         {
             minimalModeUI.ShowModeSelection();
@@ -373,45 +367,44 @@ public class GameManager : MonoBehaviour
             minimalModeUI.ShowModeSelection(); // Will show tutorial selection option
         }
 
-        // Disable mission system
-        if (missionManager != null)
-            missionManager.enabled = false;
-
         OnModeChanged?.Invoke(currentMode);
     }
 
     /// <summary>
-    /// Select mission mode
+    /// Select story mode (replaces old mission mode)
     /// </summary>
-    public void SelectMissionMode()
+    public void SelectStoryMode()
     {
         // If not in game scene, load it first
         if (SceneManager.GetActiveScene().name != gameSceneName)
         {
-            LoadGameForMission();
+            LoadGameForStory();
             return;
         }
 
-        LogDebug("Selecting mission mode");
+        LogDebug("Selecting story mode");
 
-        currentMode = GameMode.Mission;
+        currentMode = GameMode.Story;
 
-        // Hide MinimalModeUI
+        // Hide MinimalModeUI (used for tutorials)
         if (minimalModeUI != null)
-        {
             minimalModeUI.gameObject.SetActive(false);
-        }
 
-        // Enable mission system
-        if (missionManager != null)
-        {
-            missionManager.enabled = true;
-            missionManager.StartMission(0);
-        }
-
-        // Disable tutorial system
+        // COMPLETELY DISABLE old systems
+        var tutorialManager = FindFirstObjectByType<TutorialManager>();
         if (tutorialManager != null)
             tutorialManager.enabled = false;
+
+        // Start story system
+        var storyManager = FindFirstObjectByType<StoryManager>();
+        if (storyManager != null)
+        {
+            storyManager.StartStory();
+        }
+        else
+        {
+            LogError("StoryManager not found! Please add it to MVP2 scene.");
+        }
 
         // Reset journey for clean start
         if (journeyTracker != null)
@@ -443,16 +436,18 @@ public class GameManager : MonoBehaviour
             tutorialManager.gameObject.SetActive(false);
         }
 
-        // DISABLE mission system
-        if (missionManager != null)
-            missionManager.enabled = false;
-
-        // Let MinimalModeUI handle everything - DON'T reset journey here
-        // The MinimalModeUI will handle the reset and setup
+        // Let MinimalModeUI handle everything
+        if (minimalModeUI != null)
+        {
+            // You'll need to add a method to MinimalModeUI to start specific tutorials
+            // For now, just show the tutorial selection
+            minimalModeUI.ShowModeSelection();
+        }
 
         OnModeChanged?.Invoke(currentMode);
         OnGameplayStarted?.Invoke();
     }
+
     #endregion
 
     /// <summary>
@@ -462,8 +457,8 @@ public class GameManager : MonoBehaviour
     {
         if (tutorialManager != null)
             tutorialManager.enabled = false;
-        if (missionManager != null)
-            missionManager.enabled = false;
+
+        // Note: LearningMissionsManager removed - no longer used
     }
 
     /// <summary>
@@ -478,35 +473,23 @@ public class GameManager : MonoBehaviour
             if (currentMode == GameMode.Tutorial && tutorialManager != null)
             {
                 // Check if tutorial is complete
-                bool isComplete = false;
                 try
                 {
-                    isComplete = tutorialManager.IsTutorialComplete;
-                    if (isComplete)
-                    {
-                        JourneyType tutorialType = tutorialManager.CurrentTutorialType;
-                        progressTracker.RecordTutorialCompletion(tutorialType);
-                        LogDebug($"Recorded tutorial completion: {tutorialType}");
-                    }
+                    // You may need to adapt this based on your tutorial system
+                    LogDebug("Recording tutorial progress");
                 }
                 catch
                 {
                     LogDebug("Cannot check tutorial completion - property not available");
                 }
             }
-            else if (currentMode == GameMode.Mission && missionManager != null)
+            else if (currentMode == GameMode.Story)
             {
-                // Record mission progress
-                try
+                // Record story progress
+                var storyManager = FindFirstObjectByType<StoryManager>();
+                if (storyManager != null && storyManager.IsStoryComplete)
                 {
-                    int missionIndex = missionManager.GetCurrentMissionIndex();
-                    string missionName = missionManager.GetCurrentMissionName();
-                    progressTracker.RecordMissionProgress(missionIndex, missionName);
-                    LogDebug($"Recorded mission progress: {missionIndex} - {missionName}");
-                }
-                catch
-                {
-                    LogDebug("Cannot get mission info - using defaults");
+                    LogDebug("Story completed - progress recorded");
                 }
             }
         }

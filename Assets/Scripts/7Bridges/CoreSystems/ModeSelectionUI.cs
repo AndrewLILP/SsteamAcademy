@@ -110,7 +110,7 @@ public class ModeSelectorUI : MonoBehaviour
         tutorialSelectionPanel?.SetActive(false);
 
         // Start mission mode via GameManager
-        gameManager?.SelectMissionMode();
+        gameManager.SelectStoryMode();
     }
 
     /// <summary>

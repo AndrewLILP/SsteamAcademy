@@ -290,7 +290,6 @@ MonoBehaviour:
   mainMenuSceneName: MainMenu
   gameSceneName: MVP2
   tutorialManager: {fileID: 0}
-  missionManager: {fileID: 0}
   journeyTracker: {fileID: 0}
   enableDebugLogging: 1
 --- !u!4 &227528720
@@ -1421,8 +1420,8 @@ MonoBehaviour:
   missionModeButton: {fileID: 258643834}
   missionProgressText: {fileID: 1800488061}
   missionDirectButtons: []
-  settingsButton: {fileID: 0}
-  exitButton: {fileID: 0}
+  settingsButton: {fileID: 1033179243}
+  exitButton: {fileID: 329599401}
   enableDebugLogging: 1
   enableKeyboardShortcuts: 1
 --- !u!1 &1255968068

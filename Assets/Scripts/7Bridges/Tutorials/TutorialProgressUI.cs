@@ -215,7 +215,7 @@ public class TutorialProgressUI : MonoBehaviour
         if (gameManager != null)
         {
             gameObject.SetActive(false);
-            gameManager.SelectMissionMode();
+            gameManager.SelectStoryMode();
             Debug.Log("[TutorialProgressUI] Starting mission mode");
         }
     }
