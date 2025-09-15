@@ -350,7 +350,6 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void SelectTutorialMode()
     {
-        // If not in game scene, load it first
         if (SceneManager.GetActiveScene().name != gameSceneName)
         {
             LoadGameForTutorial();
@@ -361,13 +360,27 @@ public class GameManager : MonoBehaviour
 
         currentMode = GameMode.Tutorial;
 
-        // Show tutorial selection via MinimalModeUI
+        // Disable story systems
+        DisableStoryComponents();
+
+        // Show tutorial selection directly
         if (minimalModeUI != null)
         {
-            minimalModeUI.ShowModeSelection(); // Will show tutorial selection option
+            minimalModeUI.ShowTutorialSelectionDirectly(); // Changed this line
         }
 
         OnModeChanged?.Invoke(currentMode);
+    }
+
+    private void DisableStoryComponents()
+    {
+        var storyManager = FindFirstObjectByType<StoryManager>();
+        if (storyManager != null)
+            storyManager.enabled = false;
+
+        var storyModeUI = FindFirstObjectByType<StoryModeUI>();
+        if (storyModeUI != null)
+            storyModeUI.SetUIVisible(false);
     }
 
     /// <summary>
@@ -386,15 +399,23 @@ public class GameManager : MonoBehaviour
 
         currentMode = GameMode.Story;
 
-        // Hide MinimalModeUI (used for tutorials)
+        // Hide tutorial/mode selection panels only
         if (minimalModeUI != null)
-            //minimalModeUI.gameObject.SetActive(false);
-            minimalModeUI.HideAllPanels();
+        {
+            minimalModeUI.HideTutorialPanels(); // New method - see below
+        }
 
         // COMPLETELY DISABLE old systems
         var tutorialManager = FindFirstObjectByType<TutorialManager>();
         if (tutorialManager != null)
             tutorialManager.enabled = false;
+
+        // Enable story UI
+        var storyModeUI = FindFirstObjectByType<StoryModeUI>();
+        if (storyModeUI != null)
+        {
+            storyModeUI.SetUIVisible(true); // Re-enable story panels
+        }
 
         // Start story system
         var storyManager = FindFirstObjectByType<StoryManager>();
@@ -430,19 +451,13 @@ public class GameManager : MonoBehaviour
 
         currentMode = GameMode.Tutorial;
 
-        // COMPLETELY DISABLE the old tutorial system
-        if (tutorialManager != null)
-        {
-            tutorialManager.enabled = false;
-            tutorialManager.gameObject.SetActive(false);
-        }
+        // Disable story systems completely
+        DisableStoryComponents();
 
-        // Let MinimalModeUI handle everything
+        // Show tutorial selection directly
         if (minimalModeUI != null)
         {
-            // You'll need to add a method to MinimalModeUI to start specific tutorials
-            // For now, just show the tutorial selection
-            minimalModeUI.ShowModeSelection();
+            minimalModeUI.ShowTutorialSelectionDirectly(); // Changed this line
         }
 
         OnModeChanged?.Invoke(currentMode);

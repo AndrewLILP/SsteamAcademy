@@ -79,6 +79,8 @@ public class MinimalModeUI : MonoBehaviour
         CheckTutorialCompletion();
     }
 
+
+
     /// <summary>
     /// Hide all UI panels but keep the Canvas active for other systems
     /// </summary>
@@ -88,7 +90,40 @@ public class MinimalModeUI : MonoBehaviour
         tutorialSelectionPanel?.SetActive(false);
         tutorialActivePanel?.SetActive(false);
 
+        // Hide StoryModeUI panels
+        var storyModeUI = FindFirstObjectByType<StoryModeUI>();
+        if (storyModeUI != null)
+        {
+            storyModeUI.SetUIVisible(false);
+        }
+
+        // Hide dialogue system
+        var dialogueSystem = FindFirstObjectByType<DialogueSystem>();
+        if (dialogueSystem != null)
+        {
+            dialogueSystem.HideDialogue();
+        }
+
+        Debug.Log("[MinimalModeUI] All panels hidden including story panels");
+
         Debug.Log("[MinimalModeUI] All panels hidden for story mode");
+    }
+
+    /// <summary>
+    /// Show tutorial selection directly (skip mode selection)
+    /// </summary>
+    public void ShowTutorialSelectionDirectly()
+    {
+        // Hide all other panels first
+        HideAllPanels();
+
+        // Show only tutorial selection
+        modeSelectionPanel?.SetActive(false);
+        tutorialSelectionPanel?.SetActive(true);
+        tutorialActivePanel?.SetActive(false);
+
+        UpdateTutorialButtons();
+        Debug.Log("[MinimalModeUI] Showing tutorial selection directly");
     }
 
     // Simple, bulletproof UI update method
@@ -300,6 +335,18 @@ public class MinimalModeUI : MonoBehaviour
     {
         gameManager.SelectStoryMode();
         gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Hide only tutorial/mode selection panels (not story panels)
+    /// </summary>
+    public void HideTutorialPanels()
+    {
+        modeSelectionPanel?.SetActive(false);
+        tutorialSelectionPanel?.SetActive(false);
+        tutorialActivePanel?.SetActive(false);
+
+        Debug.Log("[MinimalModeUI] Tutorial panels hidden (story panels preserved)");
     }
 
     /// <summary>
