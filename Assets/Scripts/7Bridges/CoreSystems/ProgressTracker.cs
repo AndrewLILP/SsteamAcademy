@@ -36,14 +36,18 @@ public class ProgressTracker : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            LoadProgress();
-            LogDebug("ProgressTracker initialized with persistence");
+
+            // DEMO: Always start with 0% completion
+            ClearSavedProgress();
+
+            LogDebug("ProgressTracker initialized - Demo mode: fresh start every launch");
         }
         else
         {
             Destroy(gameObject);
         }
     }
+
 
     void Start()
     {
