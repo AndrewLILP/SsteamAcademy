@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
     [Header("Scene Management")]
     [SerializeField] private string mainMenuSceneName = "MainMenu";
     [SerializeField] private string gameSceneName = "MVP2";
+    [SerializeField] private string fiveBridgesSceneName = "5Bridges";
 
     [Header("System References")]
     [SerializeField] private TutorialManager tutorialManager;
@@ -315,6 +316,20 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region Game Mode Management
+
+    public void LoadFiveBridgesScene()
+    {
+        LogDebug("Loading 5 Bridges cutscene");
+
+        if (sceneTransition != null)
+        {
+            sceneTransition.LoadScene(fiveBridgesSceneName);
+        }
+        else
+        {
+            SceneManager.LoadScene(fiveBridgesSceneName);
+        }
+    }
 
     /// <summary>
     /// Show mode selection using MinimalModeUI

@@ -185,16 +185,30 @@ public class StoryManager : MonoBehaviour
     /// <summary>
     /// Complete the story sequence
     /// </summary>
+    // updated for 5 bridges cutscene and story the final dialogue:
     private void CompleteStory()
     {
         storyCompleted = true;
 
         if (dialogueSystem != null)
         {
-            dialogueSystem.ShowDialogue("Story complete! Press ESC to return to the main menu.", "System");
-        }
+            dialogueSystem.ShowDialogue("Now let me show you something interesting about those bridges...", "Leonhard Euler");
 
-        LogDebug("Königsberg story completed");
+            // Set up transition after dialogue completes
+            dialogueSystem.OnDialogueComplete += TransitionTo5Bridges;
+        }
+    }
+
+    private void TransitionTo5Bridges()
+    {
+        dialogueSystem.OnDialogueComplete -= TransitionTo5Bridges;
+
+        // Trigger scene transition
+        var gameManager = GameManager.Instance;
+        if (gameManager != null)
+        {
+            gameManager.LoadFiveBridgesScene();
+        }
     }
 
     /// <summary>
