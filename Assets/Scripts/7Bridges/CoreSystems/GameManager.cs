@@ -14,6 +14,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string gameSceneName = "MVP2";
     [SerializeField] private string fiveBridgesSceneName = "5Bridges";
 
+
     [Header("System References")]
     [SerializeField] private TutorialManager tutorialManager;
     [SerializeField] private JourneyTracker journeyTracker;

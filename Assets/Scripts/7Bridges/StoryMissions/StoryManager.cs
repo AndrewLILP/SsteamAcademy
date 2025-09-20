@@ -61,6 +61,22 @@ public class StoryManager : MonoBehaviour
         }
     }
 
+    [ContextMenu("Test 5Bridges Transition")]
+    public void TestTransitionTo5Bridges()
+    {
+        LogDebug("Testing direct transition to 5Bridges...");
+
+        if (GameManager.Instance != null)
+        {
+            LogDebug("GameManager found, calling LoadFiveBridgesScene()");
+            GameManager.Instance.LoadFiveBridgesScene();
+        }
+        else
+        {
+            LogDebug("ERROR: GameManager.Instance is NULL!");
+        }
+    }
+
     /// <summary>
     /// Initialize story systems
     /// </summary>
@@ -190,25 +206,15 @@ public class StoryManager : MonoBehaviour
     {
         storyCompleted = true;
 
-        if (dialogueSystem != null)
-        {
-            dialogueSystem.ShowDialogue("Now let me show you something interesting about those bridges...", "Leonhard Euler");
-
-            // Set up transition after dialogue completes
-            dialogueSystem.OnDialogueComplete += TransitionTo5Bridges;
-        }
+        // Replace "Press ESC" with transition dialogue
+        dialogueSystem.ShowDialogue("Now let me show you something interesting about those bridges...", "Leonhard Euler");
+        dialogueSystem.OnDialogueComplete += TransitionTo5Bridges;
     }
 
     private void TransitionTo5Bridges()
     {
         dialogueSystem.OnDialogueComplete -= TransitionTo5Bridges;
-
-        // Trigger scene transition
-        var gameManager = GameManager.Instance;
-        if (gameManager != null)
-        {
-            gameManager.LoadFiveBridgesScene();
-        }
+        GameManager.Instance?.LoadFiveBridgesScene();
     }
 
     /// <summary>
