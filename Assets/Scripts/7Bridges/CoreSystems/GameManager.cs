@@ -233,6 +233,10 @@ public class GameManager : MonoBehaviour
     {
         LogDebug("Returning to main menu");
 
+        // **FIX: Unlock cursor before returning to menu**
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         // Record current progress before leaving
         RecordCurrentProgress();
 

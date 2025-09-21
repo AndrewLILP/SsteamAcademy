@@ -76,6 +76,10 @@ public class SceneTransition : MonoBehaviour
     {
         isTransitioning = true;
 
+        // **FIX: Unlock cursor during transitions**
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         // Fade out
         yield return StartCoroutine(Fade(1f));
 
@@ -153,4 +157,6 @@ public class SceneTransition : MonoBehaviour
         overlay.SetActive(true);
         return overlay;
     }
+
+
 }

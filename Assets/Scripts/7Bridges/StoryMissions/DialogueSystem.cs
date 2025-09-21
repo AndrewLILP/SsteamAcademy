@@ -201,11 +201,11 @@ public class DialogueSystem : MonoBehaviour
                 OnContinueClicked();
             }
 
-            // ESC to close dialogue
-            if (Input.GetKeyDown(KeyCode.Escape))
-            {
-                CompleteDialogue();
-            }
+            // ESC to close dialogue - ESC returns to main menu now
+           // if (Input.GetKeyDown(KeyCode.Escape))
+            //{
+              //  CompleteDialogue();
+            //}
         }
     }
 

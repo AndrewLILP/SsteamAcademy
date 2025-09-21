@@ -54,11 +54,7 @@ public class StoryManager : MonoBehaviour
             CheckStoryProgress();
         }
 
-        // ESC to return to main menu
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            ReturnToMainMenu();
-        }
+        // **REMOVED ESC HANDLING - GameManager handles it now**
     }
 
     [ContextMenu("Test 5Bridges Transition")]

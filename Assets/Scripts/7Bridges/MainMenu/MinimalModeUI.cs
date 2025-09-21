@@ -109,6 +109,14 @@ public class MinimalModeUI : MonoBehaviour
         Debug.Log("[MinimalModeUI] All panels hidden for story mode");
     }
 
+    // ********************
+    [ContextMenu("Test Exit Button")]
+    public void TestExitButton()
+    {
+        Debug.Log("[MinimalModeUI] Testing exit button manually");
+        ExitTutorial();
+    }
+
     /// <summary>
     /// Show tutorial selection directly (skip mode selection)
     /// </summary>
@@ -171,7 +179,20 @@ public class MinimalModeUI : MonoBehaviour
         practiceButton?.onClick.AddListener(ShowTutorialSelection);
         missionsButton?.onClick.AddListener(StartMissions);
         backButton?.onClick.AddListener(ShowModeSelection);
-        exitTutorialButton?.onClick.AddListener(ExitTutorial);
+
+        // **FIX: Make sure exit button is properly connected**
+        if (exitTutorialButton != null)
+        {
+            exitTutorialButton.onClick.RemoveAllListeners();
+            exitTutorialButton.onClick.AddListener(() => {
+                Debug.Log("[MinimalModeUI] Exit tutorial button clicked");
+                ExitTutorial();
+            });
+        }
+        else
+        {
+            Debug.LogError("[MinimalModeUI] exitTutorialButton is NULL! Check inspector assignment.");
+        }
 
         // Tutorial buttons
         walkButton?.onClick.AddListener(() => StartTutorial(JourneyType.Walk));
@@ -550,15 +571,19 @@ public class MinimalModeUI : MonoBehaviour
     // Keyboard shortcuts
     void LateUpdate()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (tutorialActivePanel != null && tutorialActivePanel.activeInHierarchy)
-                ExitTutorial();
-            else if (tutorialSelectionPanel != null && tutorialSelectionPanel.activeInHierarchy)
-                ShowModeSelection();
-            else
-                gameManager?.ReturnToMainMenu();
-        }
+        // **REMOVED ESC HANDLING - GameManager handles it now**
+        // ESC is now single-purpose: return to main menu via GameManager
+
+
+        //if (Input.GetKeyDown(KeyCode.Escape))
+        //{
+          //  if (tutorialActivePanel != null && tutorialActivePanel.activeInHierarchy)
+            //    ExitTutorial();
+            //else if (tutorialSelectionPanel != null && tutorialSelectionPanel.activeInHierarchy)
+              //  ShowModeSelection();
+            //else
+              //  gameManager?.ReturnToMainMenu();
+        //}
     }
 
     // Debug and validation methods
