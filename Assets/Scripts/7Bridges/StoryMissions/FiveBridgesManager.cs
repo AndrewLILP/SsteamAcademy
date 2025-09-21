@@ -190,7 +190,7 @@ public class FiveBridgesManager : MonoBehaviour
         // Show instruction
         if (dialogueSystem != null)
         {
-            dialogueSystem.ShowDialogue("Now try to complete the Eulerian Circuit yourself!", "System");
+            dialogueSystem.ShowDialogue("Now try to complete the Eulerian Path yourself!", "System");
         }
     }
 
@@ -201,7 +201,7 @@ public class FiveBridgesManager : MonoBehaviour
         // Show completion dialogue
         if (dialogueSystem != null)
         {
-            dialogueSystem.ShowDialogue("Excellent! You've mastered the Eulerian Circuit. Now you understand why the 7-bridge problem was impossible!", "Leonhard Euler");
+            dialogueSystem.ShowDialogue("Excellent! You've mastered the Eulerian Path. Now you understand why the 7-bridge problem was impossible!", "Leonhard Euler");
 
             // Wait for dialogue completion
             while (dialogueSystem.IsDialogueActive)

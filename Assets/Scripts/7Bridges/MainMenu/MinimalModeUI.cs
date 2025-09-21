@@ -522,8 +522,8 @@ public class MinimalModeUI : MonoBehaviour
             JourneyType.Walk => 3,
             JourneyType.Trail => 4,
             JourneyType.Path => 4,
-            JourneyType.Circuit => 5,
-            JourneyType.Cycle => 5,
+            JourneyType.Circuit => 4,
+            JourneyType.Cycle => 4,
             _ => 3
         };
     }

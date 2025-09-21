@@ -88,7 +88,7 @@ public class TutorialConfig
             {
                 journeyType = JourneyType.Circuit,
                 tutorialName = "Closing Circuits",
-                requiredSteps = 5,
+                requiredSteps = 4,
                 minimumUniqueVertices = 3,
                 requiresReturnsToStart = true,
                 progressMessages = new[]
@@ -97,7 +97,6 @@ public class TutorialConfig
                     "Good start! Build your trail, remember to return.",
                     "Circuit progress! No repeated bridges.",
                     "Almost ready to close your circuit!",
-                    "Ready to return home? Complete the circuit!",
                     "Perfect circuit! You created a closed trail."
                 },
                 completionMessage = "Exceptional! You've mastered circuits - closed trails that return home.",
@@ -108,7 +107,7 @@ public class TutorialConfig
             {
                 journeyType = JourneyType.Cycle,
                 tutorialName = "Perfect Cycles",
-                requiredSteps = 5,
+                requiredSteps = 4,
                 minimumUniqueVertices = 4,
                 requiresReturnsToStart = true,
                 progressMessages = new[]
