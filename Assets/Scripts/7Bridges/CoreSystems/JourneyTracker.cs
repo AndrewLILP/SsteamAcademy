@@ -224,35 +224,29 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
         UpdateUI();
     }
 
-    // SPRINT 3 TASK 1: Enhanced Mission Complete Check with Debug Info
     public bool IsMissionComplete()
     {
         var config = GetCurrentConfig();
-        
-        bool hasMinSteps = currentJourney.Count >= config.minimumStepsForCompletion;
+
+        int journeyLength = currentJourney.Count;
         var actualType = AnalyzeCurrentJourney();
+
+        // Check if we have minimum steps
+        bool hasMinSteps = journeyLength >= config.minimumStepsForCompletion;
+
+        // Check if journey type is valid for the target
         bool correctType = IsJourneyTypeValid(actualType, targetJourneyType);
+
         bool isComplete = hasMinSteps && correctType;
-        
+
         if (enableVerboseStateLogging)
         {
             LogDebug($"Mission Completion Check:");
-            LogDebug($"  Steps: {currentJourney.Count}/{config.minimumStepsForCompletion} = {(hasMinSteps ? "✓" : "✗")}");
+            LogDebug($"  Steps: {journeyLength}/{config.minimumStepsForCompletion} = {(hasMinSteps ? "✓" : "✗")}");
             LogDebug($"  Type: {actualType} vs {targetJourneyType} = {(correctType ? "✓" : "✗")}");
             LogDebug($"  Complete: {(isComplete ? "✓ YES" : "✗ NO")}");
         }
-        
-        // Log concerning cases
-        if (isComplete && currentJourney.Count == 0)
-        {
-            LogError("CRITICAL: Mission marked complete with 0 journey steps! This indicates a state management bug.");
-        }
-        
-        if (isComplete && Time.time - lastResetTime < 0.1f)
-        {
-            LogWarning($"Mission completed immediately after reset ({Time.time - lastResetTime:F3}s) - possible state persistence issue");
-        }
-        
+
         return isComplete;
     }
 
@@ -292,7 +286,6 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
         UpdateUI();
     }
 
-    // SPRINT 3 TASK 1: Enhanced Journey Analysis with Debug Logging
     private JourneyType AnalyzeCurrentJourney()
     {
         if (currentJourney.Count < 2)
@@ -306,20 +299,21 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
                                  .Select(step => step.edgeId).ToList();
 
         bool returnsToStart = vertices.Count > 2 && vertices.First() == vertices.Last();
-        bool hasRepeatedVertices = vertices.Count != vertices.Distinct().Count();
         bool hasRepeatedEdges = edges.Count != edges.Distinct().Count();
 
         LogDebug($"Journey analysis: Vertices={vertices.Count}, Edges={edges.Count}");
         LogDebug($"  Returns to start: {returnsToStart}");
-        LogDebug($"  Repeated vertices: {hasRepeatedVertices}");
         LogDebug($"  Repeated edges: {hasRepeatedEdges}");
 
         JourneyType result;
 
         if (returnsToStart)
         {
+            // For closed journeys, check if the path (excluding return to start) has repeated vertices
             var pathVertices = vertices.Take(vertices.Count - 1).ToList();
             bool pathHasRepeatedVertices = pathVertices.Count != pathVertices.Distinct().Count();
+
+            LogDebug($"  Path has repeated vertices (excluding return): {pathHasRepeatedVertices}");
 
             if (!pathHasRepeatedVertices && !hasRepeatedEdges)
             {
@@ -327,24 +321,31 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
             }
             else if (!hasRepeatedEdges)
             {
-                result = JourneyType.Circuit;
+                result = JourneyType.Circuit;  // Trail that returns to start
             }
             else
             {
                 result = JourneyType.Walk;
             }
         }
-        else if (!hasRepeatedVertices)
-        {
-            result = JourneyType.Path;
-        }
-        else if (!hasRepeatedEdges)
-        {
-            result = JourneyType.Trail;
-        }
         else
         {
-            result = JourneyType.Walk;
+            // For open journeys
+            bool hasRepeatedVertices = vertices.Count != vertices.Distinct().Count();
+            LogDebug($"  Repeated vertices: {hasRepeatedVertices}");
+
+            if (!hasRepeatedVertices)
+            {
+                result = JourneyType.Path;
+            }
+            else if (!hasRepeatedEdges)
+            {
+                result = JourneyType.Trail;
+            }
+            else
+            {
+                result = JourneyType.Walk;
+            }
         }
 
         LogDebug($"Journey classified as: {result}");
@@ -428,7 +429,7 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
 
             [JourneyType.Circuit] = new JourneyTypeConfig(
                 JourneyType.Circuit,
-                6, 5,
+                4, 4,  // Both classification and completion at 4 steps
                 "Create a trail that returns to your starting vertex",
                 "Building your circuit! Remember: no repeated bridges, and return to start",
                 "Perfect circuit! You created a closed trail",
@@ -437,7 +438,7 @@ public class JourneyTracker : MonoBehaviour, IPuzzleSystem
 
             [JourneyType.Cycle] = new JourneyTypeConfig(
                 JourneyType.Cycle,
-                6, 5,
+                4, 4,
                 "Create a path that returns to your starting vertex",
                 "Creating your cycle! Remember: no repeated vertices, and return to start",
                 "Excellent cycle! You created a closed path",

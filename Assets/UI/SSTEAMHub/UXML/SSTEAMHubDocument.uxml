@@ -1,0 +1,57 @@
+﻿<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" 
+         editor-extension-mode="False">
+    
+    <!-- Root Container -->
+    <ui:VisualElement name="root" class="root-container">
+        
+        <!-- Header -->
+        <ui:VisualElement name="header" class="header">
+            <ui:Label text="SSTEAM Academy" class="title" />
+            <ui:Label text="Choose Your Adventure" class="subtitle" />
+        </ui:VisualElement>
+        
+        <!-- Main Content Area -->
+        <ui:VisualElement name="content" class="content-area">
+            
+            <!-- Modules Grid -->
+            <ui:VisualElement name="modules-container" class="modules-grid">
+                
+                <!-- 7 Bridges Card -->
+                <ui:Button name="btn-7bridges" class="module-card card-purple">
+                    <ui:VisualElement class="card-content">
+                        <ui:Label text="🌉" class="card-icon" />
+                        <ui:Label text="7 Bridges" class="card-title" />
+                        <ui:Label text="Graph Theory Adventure" class="card-description" />
+                    </ui:VisualElement>
+                </ui:Button>
+                
+                <!-- Open World Card -->
+                <ui:Button name="btn-openworld" class="module-card card-skyblue">
+                    <ui:VisualElement class="card-content">
+                        <ui:Label text="🌍" class="card-icon" />
+                        <ui:Label text="Open World" class="card-title" />
+                        <ui:Label text="Explore & Discover" class="card-description" />
+                    </ui:VisualElement>
+                </ui:Button>
+                
+                <!-- Golf Card -->
+                <ui:Button name="btn-golf" class="module-card card-gold">
+                    <ui:VisualElement class="card-content">
+                        <ui:Label text="⛳" class="card-icon" />
+                        <ui:Label text="Golf" class="card-title" />
+                        <ui:Label text="Physics & Precision" class="card-description" />
+                    </ui:VisualElement>
+                </ui:Button>
+                
+            </ui:VisualElement>
+            
+        </ui:VisualElement>
+        
+        <!-- Footer / Progress Section -->
+        <ui:VisualElement name="footer" class="footer">
+            <ui:Label name="progress-text" text="Progress: Coming Soon" class="progress-label" />
+        </ui:VisualElement>
+        
+    </ui:VisualElement>
+    
+</ui:UXML>

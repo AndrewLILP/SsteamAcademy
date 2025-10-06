@@ -1,0 +1,135 @@
+/* ===== ROOT & LAYOUT ===== */
+.root-container {
+    width: 100%;
+    height: 100%;
+    background-color: rgb(20, 20, 30);
+    justify-content: space-between;
+    padding: 40px;
+}
+
+/* ===== HEADER ===== */
+.header {
+    align-items: center;
+    margin-bottom: 60px;
+}
+
+.title {
+    font-size: 72px;
+    color: rgb(218, 165, 32); /* Gold */
+    -unity-font-style: bold;
+    margin-bottom: 10px;
+    -unity-text-align: middle-center;
+}
+
+.subtitle {
+    font-size: 32px;
+    color: rgb(135, 206, 235); /* Sky Blue */
+    -unity-text-align: middle-center;
+}
+
+/* ===== CONTENT AREA ===== */
+.content-area {
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+}
+
+.modules-grid {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    max-width: 1200px;
+}
+
+/* ===== MODULE CARDS ===== */
+.module-card {
+    width: 300px;
+    height: 350px;
+    margin: 20px;
+    border-radius: 20px;
+    border-width: 3px;
+    transition-duration: 0.3s;
+    cursor: link;
+}
+
+.module-card:hover {
+    scale: 1.05;
+    border-width: 4px;
+}
+
+.module-card:active {
+    scale: 0.95;
+}
+
+/* Card Color Variants */
+.card-purple {
+    background-color: rgb(75, 0, 130); /* Purple */
+    border-color: rgb(138, 43, 226);
+}
+
+.card-purple:hover {
+    background-color: rgb(95, 20, 150);
+    border-color: rgb(218, 165, 32); /* Gold highlight */
+}
+
+.card-skyblue {
+    background-color: rgb(70, 130, 180); /* Steel Blue */
+    border-color: rgb(135, 206, 235);
+}
+
+.card-skyblue:hover {
+    background-color: rgb(90, 150, 200);
+    border-color: rgb(218, 165, 32); /* Gold highlight */
+}
+
+.card-gold {
+    background-color: rgb(184, 134, 11); /* Dark Goldenrod */
+    border-color: rgb(218, 165, 32);
+}
+
+.card-gold:hover {
+    background-color: rgb(204, 154, 31);
+    border-color: rgb(138, 43, 226); /* Purple highlight */
+}
+
+/* Card Content */
+.card-content {
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.card-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    -unity-text-align: middle-center;
+}
+
+.card-title {
+    font-size: 36px;
+    color: white;
+    -unity-font-style: bold;
+    margin-bottom: 10px;
+    -unity-text-align: middle-center;
+}
+
+.card-description {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.8);
+    -unity-text-align: middle-center;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+    align-items: center;
+    margin-top: 40px;
+}
+
+.progress-label {
+    font-size: 24px;
+    color: rgb(135, 206, 235); /* Sky Blue */
+    -unity-text-align: middle-center;
+}
